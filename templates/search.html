@@ -1,0 +1,120 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Sanctions Search {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Search Results</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">Results</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Search</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <form class="input-group mb-3" action="/search/" method="post">
+                                        {% csrf_token %}
+                                        <input type="text" name="search" class="form-control" placeholder="Name of person or company" aria-label="Search request" aria-describedby="basic-addon2" value="{{ search_string }}">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button">Search</button>
+                                            </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Result group -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Search results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                <!-- [ tabs ] start -->
+                                    {% for sanction in sanctions %}
+                                        <div class="col-sm-12">
+                                            <h5>{{ sanction.main_name }}</h5>
+                                            <p>Sanction of  <span class="flag-icon flag-icon-{{ sanction.sanctioned_by }}"></span></p>
+                                            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active text-uppercase" id="program-tab" data-toggle="tab" href="#program-{{ sanction.id }}" role="tab" aria-controls="home-{{ sanction.id }}" aria-selected="true">Program</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-uppercase" id="names-tab" data-toggle="tab" href="#names-{{ sanction.id }}" role="tab" aria-controls="profile-{{ sanction.id }}" aria-selected="false">Other Names</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-uppercase" id="details-tab" data-toggle="tab" href="#details-{{ sanction.id }}" role="tab" aria-controls="details-{{ sanction.id }}" aria-selected="false">Details</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-uppercase" id="nationality-tab" data-toggle="tab" href="#nationality-{{ sanction.id }}" role="tab" aria-controls="nationality-{{ sanction.id }}" aria-selected="false">Nationality</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-uppercase" id="address-tab" data-toggle="tab" href="#address-{{ sanction.id }}" role="tab" aria-controls="address-{{ sanction.id }}" aria-selected="false">Address and Contacts</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-uppercase" id="additional-tab" data-toggle="tab" href="#additional-{{ sanction.id }}" role="tab" aria-controls="additional-{{ sanction.id }}" aria-selected="false">Additional Info</a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content" id="myTabContent">
+                                                <div class="tab-pane fade show active" id="program-{{ sanction.id }}" role="tabpanel" aria-labelledby="program-tab">
+                                                    <p class="mb-0"> {{ sanction.program|safe }}
+                                                    </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="names-{{ sanction.id }}" role="tabpanel" aria-labelledby="names-tab">
+                                                    <p class="mb-0"> {{ sanction.names|safe }} </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="details-{{ sanction.id }}" role="tabpanel" aria-labelledby="details-tab">
+                                                    <p class="mb-0"> {{ sanction.personal_details|safe }} </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="nationality-{{ sanction.id }}" role="tabpanel" aria-labelledby="nationality-tab">
+                                                    <p class="mb-0"> {{ sanction.nationality|safe }} </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="address-{{ sanction.id }}" role="tabpanel" aria-labelledby="address-tab">
+                                                    <p class="mb-0"> {{ sanction.address|safe }} </p>
+                                                </div>
+                                                <div class="tab-pane fade" id="additional-{{ sanction.id }}" role="tabpanel" aria-labelledby="additional-tab">
+                                                    <p class="mb-0"> {{ sanction.additional_info|safe }} </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <p><br></p>
+                                    {% endfor %}
+                                <!-- [ tabs ] end -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Sanctions Search {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Search Form</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">Search</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Search</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <form action="/search/" method="post">
+                                            {% csrf_token %}
+                                            <div class="form-group">
+                                                <input type="text" id="searchRequestText" class="form-control" placeholder="Name of person or company" name="search">
+                                                <small id="searchHelp" class="form-text text-muted">NOTE: non-latin names are fine only if they are included to the sanction record. If not sure, try several latin transcriptions.<br>
+                                                    Example: Vladimir Putin is in the USA sanctions list but cannot be found with "Владимир Путин" request.</small>
+                                            </div>
+                                            <button type="submit" id="submitSearchButton" class="btn btn-primary">Search</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- About group -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>About</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <p>
+                                    Full text search within the sanctions lists of the United States, United Kingdom and European Union. <br>
+                                    Under active development. <br>
+                                    <br>
+                                    Glory to Ukraine! <span class="flag-icon flag-icon-ua"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Sanctions Search {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+       <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Upload lists</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <form action="/create_index/" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" id="CreateIndexButton" class="btn btn-primary">Create index</button>
+                                    </form>
+                                </div>
+                                <p>{{ result }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+       </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
