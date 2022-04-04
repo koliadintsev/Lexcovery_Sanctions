@@ -1,3 +1,5 @@
+import copy
+import datetime
 import os
 
 from lxml import etree
@@ -6,14 +8,56 @@ from DataModel.EU import sanction_EU_additionailnfo, sanction_EU_contactinfo, sa
     sanction_EU_citizenship, sanction_EU_identificationType, sanction_EU_generic
 from Lexcovery_Sanctions.settings import STATIC_ROOT
 from Lexcovery_Sanctions import settings
+import requests
+from dateutil.parser import parse
 
-SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static')  + "/Sanctions/EU/sanctions.xml"
+SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/EU/sanctions.xml"
 sanctions = []
+XML_URL = "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=n009exmj"
+
+
+def get_list_xml():
+    response = requests.get(XML_URL)
+    if response.ok:
+        doc = response.content
+        d = copy.deepcopy(doc)
+        return d
+    else:
+        return
+
+
+def import_data_from_web():
+    global sanctions
+    parser = etree.XMLParser(recover=True, huge_tree=True)
+    last_update = ''
+
+    xml_text = get_list_xml()
+
+    doc_id = 0
+    file = etree.fromstring(xml_text, parser=parser)
+    text = file.get('generationDate')
+    date = parse(text).date()
+    last_update = date.strftime("%d/%m/%Y")
+
+    for element in file.getchildren():
+        if element.tag == "{http://eu.europa.ec/fpi/fsd/export}sanctionEntity":
+            import_data_from_element(element, doc_id)
+            element.clear()
+            doc_id = doc_id + 1
+        if element.tag == "{http://eu.europa.ec/fpi/fsd/export}export":
+            text = element.get('generationDate')
+            date = parse(text).date()
+            last_update = date.strftime("%d/%m/%Y")
+
+    # print('import finished')
+
+    return sanctions, last_update
 
 
 def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
+    last_update = ''
 
     doc_id = 0
     for event, element in etree.iterparse(SANCTIONS_LIST, tag="{http://eu.europa.ec/fpi/fsd/export}sanctionEntity", recover=True, huge_tree=True, ):
@@ -21,6 +65,10 @@ def import_data_from_xml():
         element.clear()
         doc_id = doc_id+1
 
+    for event, element in etree.iterparse(SANCTIONS_LIST, tag="{http://eu.europa.ec/fpi/fsd/export}export", recover=True, huge_tree=True, ):
+        text = element.get('generationDate')
+        date = parse(text).date()
+        last_update = date.strftime("%d/%m/%Y")
     """
     tree = ET.fromstring(file.read().strip())
     executor = concurrent.futures.ThreadPoolExecutor(100)
@@ -28,7 +76,7 @@ def import_data_from_xml():
     concurrent.futures.wait(futures)
     """
     #print('import finished')
-    return sanctions
+    return sanctions, last_update
 
 
 def find_additional_info(doc):

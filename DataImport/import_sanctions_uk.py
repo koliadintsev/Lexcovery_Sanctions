@@ -1,4 +1,5 @@
 import copy
+import datetime
 import os
 
 from lxml import etree
@@ -13,6 +14,7 @@ SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/UK/UK_
 XML_URL = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1065123/UK_sanctions_list.xml"
 sanctions = []
 
+
 def get_list_xml():
     response = requests.get(XML_URL)
     if response.ok:
@@ -22,17 +24,44 @@ def get_list_xml():
     else:
         return
 
+
+def import_data_from_web():
+    global sanctions
+    parser = etree.XMLParser(recover=True, huge_tree=True)
+    last_update = ''
+
+    xml_text = get_list_xml()
+
+    doc_id = 0
+    file = etree.fromstring(xml_text, parser=parser)
+
+    for element in file.getchildren():
+        if element.tag == "Designation":
+            import_data_from_element(element, doc_id)
+            element.clear()
+            doc_id = doc_id + 1
+        if element.tag == "DateGenerated":
+            #date = datetime.datetime.strptime(element.text, "%d/%m/%Y").date()
+            #last_update = date.strftime("%d/%m/%Y")
+            last_update = element.text
+
+    #print('import finished')
+
+    return sanctions, last_update
+
+
 def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
-
-    #file = get_list_xml()
+    last_update = ''
 
     doc_id = 0
     for event, element in etree.iterparse(SANCTIONS_LIST, tag="Designation", recover=True, huge_tree=True, ):
         import_data_from_element(element, doc_id)
         element.clear()
         doc_id = doc_id + 1
+    for event, element in etree.iterparse(SANCTIONS_LIST, tag="DateGenerated", recover=True, huge_tree=True, ):
+        last_update = element.text
 
     """
     tree = ET.fromstring(file.read().strip())
@@ -42,7 +71,7 @@ def import_data_from_xml():
     """
     #print('import finished')
 
-    return sanctions
+    return sanctions, last_update
 
 
 def import_data_from_element(doc, doc_id):

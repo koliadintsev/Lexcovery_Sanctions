@@ -11,19 +11,22 @@
                 <!-- [ Main Content ] start -->
                 <div class="row">
                     <div class="col-sm-12">
+                        <div class="col-sm-12">
                         <div class="card">
                             <div class="card-header">
                                 <h5>Upload lists</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <form action="/create_index/">
-                                        {% csrf_token %}
-                                        <button type="submit" id="CreateIndexButton" class="btn btn-primary">Create index</button>
-                                    </form>
+                                    <div class="col-md-6">
+                                        <form action="#" method="get">
+                                            <input type="submit" class="btn btn-primary" value="Create index" name="createIndexBtn">
+                                        </form>
+                                    </div>
                                 </div>
                                 <p>{{ result }}</p>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>

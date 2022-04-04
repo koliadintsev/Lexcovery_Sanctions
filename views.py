@@ -2,15 +2,22 @@
 from django.shortcuts import render
 from Search import elasticsearch_handler
 import re
+import datetime
 
 
 def main_view(request):
-    return render(request, 'main.html', {})
+    last_update_us = elasticsearch_handler.last_update_us
+    last_update_uk = elasticsearch_handler.last_update_uk
+    last_update_eu = elasticsearch_handler.last_update_eu
+
+    return render(request, 'main.html', {'last_update_us': last_update_us, 'last_update_uk': last_update_uk,
+                                         'last_update_eu': last_update_eu})
 
 
 def search(request):
     search_string = request.POST["search"]
     sanctions = elasticsearch_handler.search_fuzzy_request(search_string)
+
     for sanction in sanctions:
         sanction.names = re.sub(r'\n', r' <br> ', sanction.names)
         sanction.additional_info = re.sub(r'\n', r' <br> ', sanction.additional_info)
@@ -31,9 +38,11 @@ def support(request):
 
 
 def upload(request):
-    return render(request, 'upload.html', {'result': 'Upload lists first'})
+    result = 'Upload lists first'
+    if request.GET.get('createIndexBtn'):
+        update_time = datetime.datetime.now().time()
+        update = update_time.strftime("%H:%M")
+        elasticsearch_handler.create_index()
+        result = 'Index created at ' + update
+    return render(request, 'upload.html', {'result': result})
 
-
-def create_index(request):
-    elasticsearch_handler.create_index()
-    return render(request, 'upload.html', {'result': 'Index created'})

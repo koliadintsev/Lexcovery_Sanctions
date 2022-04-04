@@ -37,12 +37,9 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <form class="input-group mb-3" action="/search/" method="post">
+                                        <form class="input-group mb-3" action="#" method="post">
                                             {% csrf_token %}
-                                            <input type="text" name="search" class="form-control" placeholder="Name of person or company" aria-label="Search request" aria-describedby="basic-addon2" value="{{ search_string }}">
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-primary" type="button">Search</button>
-                                                </div>
+                                            <input type="text" id="search" name="search" class="form-control" placeholder="Name of person or company" title="Press enter for new search" value="{{ search_string }}">
                                         </form>
                                     </div>
                                 </div>

@@ -6,26 +6,108 @@ from DataModel.USA import sanction_USA, sanction_USA_aka, sanction_USA_address, 
 from DataModel.USA import sanction_USA_vessel
 from Lexcovery_Sanctions.settings import STATIC_ROOT
 from Lexcovery_Sanctions import settings
+import requests
+import datetime
+import copy
 
 SANCTIONS_SDN = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/USA/sdn.xml"
 SANCTIONS_CONS = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/USA/consolidated.xml"
+
+XML_URL_SDN = "https://www.treasury.gov/ofac/downloads/sdn.xml"
+XML_URL_CONS = "https://www.treasury.gov/ofac/downloads/consolidated/consolidated.xml"
+
 sanctions = []
+
+
+def get_list_xml(url):
+    response = requests.get(url)
+    if response.ok:
+        doc = response.content
+        d = copy.deepcopy(doc)
+        return d
+    else:
+        return
+
+
+def import_data_from_web():
+    global sanctions
+    parser = etree.XMLParser(recover=True, huge_tree=True)
+    last_update = ''
+    update_sdn = datetime.datetime.today()
+    update_cons = datetime.datetime.today()
+
+    sdn_xml_text = get_list_xml(XML_URL_SDN)
+    cons_xml_text = get_list_xml(XML_URL_CONS)
+
+    doc_id = 0
+
+    file_sdn = etree.fromstring(sdn_xml_text, parser=parser)
+    file_cons = etree.fromstring(cons_xml_text, parser=parser)
+
+    for element in file_sdn.getchildren():
+        if element.tag == "{http://tempuri.org/sdnList.xsd}sdnEntry":
+            import_data_from_element(element, doc_id)
+            element.clear()
+            doc_id = doc_id + 1
+        if element.tag == "{http://tempuri.org/sdnList.xsd}publshInformation":
+            for item in element.getchildren():
+                item.tag = item.tag.split('}')[-1]
+                if item.tag == 'Publish_Date':
+                    update_sdn = datetime.datetime.strptime(item.text, "%m/%d/%Y").date()
+
+    for element in file_cons.getchildren():
+        if element.tag == "{http://tempuri.org/sdnList.xsd}sdnEntry":
+            import_data_from_element(element, doc_id)
+            element.clear()
+            doc_id = doc_id + 1
+        if element.tag == "{http://tempuri.org/sdnList.xsd}publshInformation":
+            for item in element.getchildren():
+                item.tag = item.tag.split('}')[-1]
+                if item.tag == 'Publish_Date':
+                    update_cons = datetime.datetime.strptime(item.text, "%m/%d/%Y").date()
+
+    if update_sdn > update_cons:
+        last_update = update_sdn.strftime("%d/%m/%Y")
+    else:
+        last_update = update_cons.strftime("%d/%m/%Y")
+
+    #print('import finished')
+
+    return sanctions, last_update
 
 
 def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
+    last_update = ''
+    update_sdn = datetime.datetime.today()
+    update_cons = datetime.datetime.today()
 
     doc_id = 0
     for event, element in etree.iterparse(SANCTIONS_SDN, tag="{http://tempuri.org/sdnList.xsd}sdnEntry", recover=True, huge_tree=True, ):
         import_data_from_element(element, doc_id)
         element.clear()
         doc_id = doc_id +1
+    for event, element in etree.iterparse(SANCTIONS_SDN, tag="{http://tempuri.org/sdnList.xsd}publshInformation", recover=True, huge_tree=True, ):
+        for item in element.getchildren():
+            item.tag = item.tag.split('}')[-1]
+            if item.tag == 'Publish_Date':
+                update_sdn = datetime.datetime.strptime(item.text, "%m/%d/%Y").date()
 
     for event, element in etree.iterparse(SANCTIONS_CONS, tag="{http://tempuri.org/sdnList.xsd}sdnEntry", recover=True, huge_tree=True):
         import_data_from_element(element, doc_id)
         element.clear()
         doc_id = doc_id+1
+    for event, element in etree.iterparse(SANCTIONS_CONS, tag="{http://tempuri.org/sdnList.xsd}publshInformation", recover=True, huge_tree=True):
+        for item in element.getchildren():
+            item.tag = item.tag.split('}')[-1]
+            if item.tag == 'Publish_Date':
+                update_cons = datetime.datetime.strptime(item.text, "%m/%d/%Y").date()
+
+    if update_sdn > update_cons:
+        last_update = update_sdn.strftime("%d/%m/%Y")
+    else:
+        last_update = update_cons.strftime("%d/%m/%Y")
 
     """
     tree = ET.fromstring(file.read().strip())
@@ -34,7 +116,7 @@ def import_data_from_xml():
     concurrent.futures.wait(futures)
     """
 #    print('import finished')
-    return sanctions
+    return sanctions, last_update
 
 
 def import_data_from_element(doc, doc_id):
