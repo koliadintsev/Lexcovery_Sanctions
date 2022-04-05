@@ -1,6 +1,8 @@
 import copy
 import datetime
 import os
+import aiohttp
+import asyncio
 
 from lxml import etree
 from DataModel.UK import sanction_UK, sanction_UK_individual, sanction_UK_name, sanction_UK_indicator, \
@@ -15,31 +17,30 @@ XML_URL = "https://assets.publishing.service.gov.uk/government/uploads/system/up
 sanctions = []
 
 
-def get_list_xml():
-    response = requests.get(XML_URL)
+async def get_list_xml(session):
+    #response = requests.get(XML_URL)
+    response = await session.request(method='GET', url=XML_URL)
     if response.ok:
-        doc = response.content
+        doc = await response.read()
         d = copy.deepcopy(doc)
         return d
     else:
         return
 
 
-def import_data_from_web():
+async def import_data_from_web(session):
     global sanctions
     parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
 
-    xml_text = get_list_xml()
+    xml_text = await get_list_xml(session)
 
     doc_id = 0
     file = etree.fromstring(xml_text, parser=parser)
 
+    await asyncio.gather(*[import_from_element_async(element) for element in file.getchildren()])
+
     for element in file.getchildren():
-        if element.tag == "Designation":
-            import_data_from_element(element, doc_id)
-            element.clear()
-            doc_id = doc_id + 1
         if element.tag == "DateGenerated":
             #date = datetime.datetime.strptime(element.text, "%d/%m/%Y").date()
             #last_update = date.strftime("%d/%m/%Y")
@@ -50,7 +51,14 @@ def import_data_from_web():
     return sanctions, last_update
 
 
-def import_data_from_xml():
+async def import_from_element_async(element):
+    doc_id = 0
+    if element.tag == "Designation":
+        import_data_from_element(element, doc_id)
+        element.clear()
+        doc_id = doc_id + 1
+
+async def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
@@ -283,3 +291,80 @@ def import_data_from_element(doc, doc_id):
                  PhoneNumbers, EmailAddresses, IndividualDetails, EntityDetails, doc_id)
     sanctions.append(sanction)
     #print(UniqueID + ' added successfully')
+
+
+def import_data_from_json(element):
+    LastUpdated = element.LastUpdated
+    DateDesignated = element.DateDesignated
+    UniqueID = element.UniqueID
+    OFSIGroupID = element.OFSIGroupID
+    UNReferenceNumber = element.UNReferenceNumber
+    RegimeName = element.RegimeName
+    IndividualEntityShip = element.IndividualEntityShip
+    DesignationSource = element.DesignationSource
+    SanctionsImposed = element.SanctionsImposed
+    OtherInformation = element.OtherInformation
+    UKStatementofReasons = element.UKStatementofReasons
+    Names = []
+    NonLatinNames = element.NonLatinNames
+    SanctionsImposedIndicators = []
+    Addresses = []
+    PhoneNumbers = element.PhoneNumbers
+    EmailAddresses = element.EmailAddresses
+    IndividualDetails = []
+    EntityDetails = []
+
+    for item in element.Names:
+        name = sanction_UK_name.SanctionUKName()
+        name.NameType = item['NameType']
+        name.AliasStrength = item['NameType']
+        name.Name = item['Name']
+        Names.append(name)
+
+    for item in element.SanctionsImposedIndicators:
+        indicator = sanction_UK_indicator.SanctionUKIndicator()
+        indicator.TechnicalAssistanceRelatedToAircraft = item['TechnicalAssistanceRelatedToAircraft']
+        indicator.PreventionOfCharteringOfShipsAndAircraft = item['PreventionOfCharteringOfShipsAndAircraft']
+        indicator.PreventionOfCharteringOfShips = item['PreventionOfCharteringOfShips']
+        indicator.TravelBan = item['TravelBan']
+        indicator.ProhibitionOfPortEntry = item['ProhibitionOfPortEntry']
+        indicator.Deflag = item['Deflag']
+        indicator.CrewServicingOfShipsAndAircraft = item['CrewServicingOfShipsAndAircraft']
+        indicator.ClosureOfRepresentativeOffices = item['ClosureOfRepresentativeOffices']
+        indicator.CharteringOfShips = item['CharteringOfShips']
+        indicator.TargetedArmsEmbargo = item['TargetedArmsEmbargo']
+        indicator.ArmsEmbargo = item['ArmsEmbargo']
+        indicator.AssetFreeze = item['AssetFreeze']
+        SanctionsImposedIndicators.append(indicator)
+
+    for item in element.Addresses:
+        address = sanction_UK_address.SanctionUKAddress()
+        address.Address = item['Address']
+        address.AddressCountry = item['AddressCountry']
+        Addresses.append(address)
+
+    for item in element.IndividualDetails:
+        individual = sanction_UK_individual.SanctionUKIndividual()
+        individual.BirthDetails = item['BirthDetails']
+        individual.PassportDetails = item['PassportDetails']
+        individual.Nationalities = item['Nationalities']
+        individual.NationalIdentifierDetails = item['NationalIdentifierDetails']
+        individual.Gender = item['Gender']
+        individual.Positions = item['Positions']
+        individual.DOB = item['DOB']
+        IndividualDetails.append(individual)
+
+    for item in element.EntityDetails:
+        entity = sanction_UK_Entity.SanctionUKEntity()
+        entity.BusinessRegistrationNumbers = item['BusinessRegistrationNumbers']
+        entity.TypeOfEntities = item['TypeOfEntities']
+        entity.Subsidiaries = item['Subsidiaries']
+        entity.ParentCompanies = item['ParentCompanies']
+        EntityDetails.append(entity)
+
+    sanction = sanction_UK.SanctionUK(LastUpdated, DateDesignated, UniqueID, OFSIGroupID, UNReferenceNumber, RegimeName,
+                                      Names, NonLatinNames, IndividualEntityShip, DesignationSource, SanctionsImposed,
+                                      SanctionsImposedIndicators, OtherInformation, UKStatementofReasons, Addresses,
+                                      PhoneNumbers, EmailAddresses, IndividualDetails, EntityDetails, element.id)
+    return sanction
+    # print(UniqueID + ' added successfully')

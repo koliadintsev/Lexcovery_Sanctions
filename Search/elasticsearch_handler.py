@@ -17,6 +17,10 @@ from DataModel.UK import sanction_UK
 from DataModel.EU import sanction_EU
 import copy
 from Lexcovery_Sanctions import settings
+import aiohttp
+import asyncio
+
+from aiohttp import ClientSession
 
 SERVER_URL_DEBUG = "https://localhost:9200"  # Тест
 #SERVER_URL = "http://elasticsearch:9200"  # Docker
@@ -36,6 +40,10 @@ CLOUD_ID = "StopRussian:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvJGUyMWY4NDQwZTgyODRh
 sanctions_USA = []
 sanctions_EU = []
 sanctions_UK = []
+
+bulk_USA = []
+bulk_UK = []
+bulk_EU = []
 
 last_update_us = ''
 last_update_uk = ''
@@ -66,43 +74,20 @@ def initialize_client():
     return client
 
 
-def import_sanctions_lists():
-    global sanctions_USA
-    global sanctions_EU
-    global sanctions_UK
-
-    global last_update_us
-    global last_update_uk
-    global last_update_eu
-
-    try:
-        sanctions_USA, last_update_us = import_sanctions_usa.import_data_from_web()
-    except Exception:
-        sanctions_USA, last_update_us = import_sanctions_usa.import_data_from_xml()
-    try:
-        sanctions_UK, last_update_uk = import_sanctions_uk.import_data_from_web()
-    except Exception:
-        sanctions_UK, last_update_uk = import_sanctions_uk.import_data_from_xml()
-    try:
-        sanctions_EU, last_update_eu = import_sanctions_eu.import_data_from_web()
-    except Exception:
-        sanctions_EU, last_update_eu = import_sanctions_eu.import_data_from_xml()
-
-
-def create_index():
+async def create_index():
     global sanctions_USA
     global sanctions_EU
     global sanctions_UK
 
     client = initialize_client()
 
-    import_sanctions_lists()
+    await import_sanctions_lists()
 
     delete_index()
 
-    bulk_USA = []
-    bulk_UK = []
-    bulk_EU = []
+    global bulk_USA
+    global bulk_UK
+    global bulk_EU
 
     # Создаем индекс
     client.indices.create(index="sanctions_usa")
@@ -110,6 +95,11 @@ def create_index():
     client.indices.create(index="sanctions_eu")
 
     # Вносим имена в индекс
+
+    LIST_SANCTIONS = ["US", "UK", "EU"]
+
+    await asyncio.gather(*[sanction_to_json_list(list_name) for list_name in LIST_SANCTIONS])
+    """
     for sanction in sanctions_USA:
         dict = jsons.dump(sanction)
         bulk_USA.append(copy.deepcopy(dict))
@@ -121,10 +111,40 @@ def create_index():
     for sanction in sanctions_EU:
         dict = jsons.dump(sanction)
         bulk_EU.append(copy.deepcopy(dict))
-
+    """
     helpers.bulk(client, bulk_USA, chunk_size=1000, request_timeout=200, index='sanctions_usa')
     helpers.bulk(client, bulk_UK, chunk_size=1000, request_timeout=200, index='sanctions_uk')
     helpers.bulk(client, bulk_EU, chunk_size=1000, request_timeout=200, index='sanctions_eu')
+    print('Indexes created')
+
+
+async def sanction_to_json_list(list_name):
+    global sanctions_USA
+    global sanctions_EU
+    global sanctions_UK
+
+    if list_name == "US":
+        await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_USA])
+    elif list_name == "UK":
+        await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UK])
+    elif list_name == "EU":
+        await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_EU])
+
+
+async def sanction_to_json(sanction, list_name):
+    global bulk_USA
+    global bulk_UK
+    global bulk_EU
+
+    if list_name == "US":
+        dict = jsons.dump(sanction)
+        bulk_USA.append(copy.deepcopy(dict))
+    elif list_name == "UK":
+        dict = jsons.dump(sanction)
+        bulk_UK.append(copy.deepcopy(dict))
+    elif list_name == "EU":
+        dict = jsons.dump(sanction)
+        bulk_EU.append(copy.deepcopy(dict))
 
 
 def delete_index():
@@ -165,53 +185,81 @@ def search_match_request(request):
     return result_usa, result_uk, result_eu
 
 
-def search_fuzzy_request(request):
-    global sanctions_USA
-    global sanctions_EU
-    global sanctions_UK
-
-    if len(sanctions_USA) == 0:
-        import_sanctions_lists()
+async def search_fuzzy_request(request):
 
     client = initialize_client()
     search_result = []
     result = []
 
-    query = Q("multi_match", query = request, type='best_fields', operator='and', fuzziness='AUTO')
+    query = Q("multi_match", query=request, type='best_fields', operator='and', fuzziness='AUTO')
 
-    s = Search().using(client).query(query).source(["id"])
+    s = Search().using(client).query(query)
     s.execute()
     for hit in s:
-        res = {"index": hit.meta.index, "doc_id": hit.id}
+        res = {"index": hit.meta.index, "hit": hit}
         search_result.append(res)
 
     for doc in search_result:
-        doc_id = doc["doc_id"]
+        hit = doc["hit"]
         if doc["index"] == "sanctions_usa":
-            sanction = sanctions_USA[doc_id]
-            if sanction.id != doc_id:
-                for s in sanctions_USA:
-                    if s.id == doc_id:
-                        sanction = s
+            sanction = import_sanctions_usa.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
         elif doc["index"] == "sanctions_uk":
-            sanction = sanctions_UK[doc_id]
-            if sanction.id != doc_id:
-                for s in sanctions_UK:
-                    if s.id == doc_id:
-                        sanction = s
+            sanction = import_sanctions_uk.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
         elif doc["index"] == "sanctions_eu":
-            sanction = sanctions_EU[doc_id]
-            if sanction.id != doc_id:
-                for s in sanctions_EU:
-                    if s.id == doc_id:
-                        sanction = s
+            sanction = import_sanctions_eu.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
 
     return result
 
+
 def check():
     client = initialize_client()
     return client.ping()
+
+
+async def import_sanctions_lists():
+    global sanctions_USA
+    global sanctions_EU
+    global sanctions_UK
+
+    global last_update_us
+    global last_update_uk
+    global last_update_eu
+
+    LIST_SANCTIONS = ["US", "UK", "EU"]
+
+    #async with ClientSession() as session:
+        #for name in LIST_SANCTIONS:
+            #await import_one_list(name, session)
+
+    async with ClientSession() as session:
+        await asyncio.gather(*[import_one_list(name, session) for name in LIST_SANCTIONS])
+
+
+async def import_one_list(list_name, session):
+    global sanctions_USA
+    global sanctions_EU
+    global sanctions_UK
+
+    global last_update_us
+    global last_update_uk
+    global last_update_eu
+
+    if list_name == "US":
+        try:
+            sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_web(session)
+        except Exception:
+            sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_xml()
+    elif list_name == "UK":
+        try:
+            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
+        except Exception:
+            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
+    elif list_name == "EU":
+        try:
+            sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_web(session)
+        except Exception:
+            sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_xml()
 

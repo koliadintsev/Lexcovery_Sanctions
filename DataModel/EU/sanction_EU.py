@@ -37,13 +37,17 @@ class SanctionEU(SanctionEUGeneric):
         main_name = ''
         names = ''
         for name in self.nameAlias:
-            if not main_name:
+            if not main_name and (name.nameLanguage == '' or name.nameLanguage == 'EN'):
                 main_name = name.wholeName
             else:
                 if names:
                     names = names + ';\n' + name.wholeName
                 else:
                     names = name.wholeName
+                if name.remark:
+                    names = names + ', ' + name.remark
+        if not main_name:
+            main_name = self.nameAlias[0].wholeName
 
         program = ''
         regulation = self.regulation
@@ -107,9 +111,12 @@ class SanctionEU(SanctionEUGeneric):
         functions = ''
         title = ''
         gender = ''
+        gender_found = False
         for name in self.nameAlias:
             if name.gender:
-                gender = gender + name.gender + '; '
+                if not gender_found:
+                    gender = name.gender
+                    gender_found = True
             if name.function:
                 functions = functions + name.function + ';\n'
             if name.title:

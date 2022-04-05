@@ -10,28 +10,31 @@ from Lexcovery_Sanctions.settings import STATIC_ROOT
 from Lexcovery_Sanctions import settings
 import requests
 from dateutil.parser import parse
+import aiohttp
+import asyncio
 
 SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/EU/sanctions.xml"
 sanctions = []
 XML_URL = "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content?token=n009exmj"
 
 
-def get_list_xml():
-    response = requests.get(XML_URL)
+async def get_list_xml(session):
+    #response = requests.get(XML_URL)
+    response = await session.request(method='GET', url=XML_URL)
     if response.ok:
-        doc = response.content
+        doc = await response.read()
         d = copy.deepcopy(doc)
         return d
     else:
         return
 
 
-def import_data_from_web():
+async def import_data_from_web(session):
     global sanctions
     parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
 
-    xml_text = get_list_xml()
+    xml_text = await get_list_xml(session)
 
     doc_id = 0
     file = etree.fromstring(xml_text, parser=parser)
@@ -39,11 +42,9 @@ def import_data_from_web():
     date = parse(text).date()
     last_update = date.strftime("%d/%m/%Y")
 
+    await asyncio.gather(*[import_from_element_async(element) for element in file.getchildren()])
+
     for element in file.getchildren():
-        if element.tag == "{http://eu.europa.ec/fpi/fsd/export}sanctionEntity":
-            import_data_from_element(element, doc_id)
-            element.clear()
-            doc_id = doc_id + 1
         if element.tag == "{http://eu.europa.ec/fpi/fsd/export}export":
             text = element.get('generationDate')
             date = parse(text).date()
@@ -54,7 +55,15 @@ def import_data_from_web():
     return sanctions, last_update
 
 
-def import_data_from_xml():
+async def import_from_element_async(element):
+    doc_id = 0
+    if element.tag == "{http://eu.europa.ec/fpi/fsd/export}sanctionEntity":
+        import_data_from_element(element, doc_id)
+        element.clear()
+        doc_id = doc_id + 1
+
+
+async def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
@@ -282,3 +291,185 @@ def import_data_from_element(doc, doc_id):
 
     sanctions.append(sanction)
     #print(euReferenceNumber + ' added successfully')
+
+
+def import_data_from_json(element):
+    code = element.code
+    classificationCode = element.classificationCode
+    nameAlias = []
+    citizenship = []
+    birthdate = []
+    address = []
+    identification = []
+    regulation = sanction_EU_regulation.SanctionEURegulation()
+    delistingDate = element.delistingDate
+    designationDate = element.designationDate
+    unitedNationId = element.unitedNationId
+    euReferenceNumber = element.euReferenceNumber
+
+    sanction = sanction_EU.SanctionEU()
+
+    sanction.id = element.id
+    sanction.remark = element.remark
+
+    reg = element.regulation
+    regulation.programme = reg['programme']
+    regulation.numberTitle = reg['numberTitle']
+    regulation.entryIntoForceDate = reg['entryIntoForceDate']
+    regulation.publicationDate = reg['publicationDate']
+    regulation.organisationType = reg['organisationType']
+    regulation.regulationType = reg['regulationType']
+    regulation.publicationUrl = reg['publicationUrl']
+    if reg['corrigendum']:
+        summary = sanction_EU_regulationSummary.SanctionEURegulationSummary()
+        item = reg['corrigendum']
+        summary.publicationDate = item['publicationDate']
+        summary.numberTitle = item['numberTitle']
+        summary.publicationUrl = item['publicationUrl']
+        summary.regulationType = item['regulationType']
+        regulation.corrigendum = summary
+
+    add_info = []
+    for item in element.additionalInformation:
+        additionalInformation = sanction_EU_additionailnfo.SanctionEUAdditionalInfo()
+        additionalInformation.key = item['key']
+        additionalInformation.value = item['value']
+        add_info.append(additionalInformation)
+    sanction.additionalInformation = add_info
+
+    for item in element.nameAlias:
+        name = sanction_EU_name.SanctionEUName()
+        name.regulationSummary = find_regulation_summary_json(item)
+        name.regulationLanguage = item['regulationLanguage']
+        name.title = item['title']
+        name.strong = item['strong']
+        name.nameLanguage = item['nameLanguage']
+        name.gender = item['gender']
+        name.function = item['function']
+        name.wholeName = item['wholeName']
+        name.lastName = item['lastName']
+        name.middleName = item['middleName']
+        name.firstName = item['firstName']
+        name.remark = item['remark']
+        name.additionalInformation = find_additional_info_json(item)
+        nameAlias.append(name)
+
+    for item in element.citizenship:
+        citizen = sanction_EU_citizenship.SanctionEUCitizenship()
+        citizen.regulationSummary = find_regulation_summary_json(item)
+        citizen.regulationLanguage = item['regulationLanguage']
+        citizen.countryDescription = item['countryDescription']
+        citizen.countryIso2Code = item['countryIso2Code']
+        citizen.region = item['region']
+        citizen.disenfranchisementDate = item['disenfranchisementDate']
+        citizen.acquisitionDate = item['acquisitionDate']
+        citizen.remark = item['remark']
+        citizen.additionalInformation = find_additional_info_json(item)
+        citizenship.append(citizen)
+
+    for item in element.birthdate:
+        birth = sanction_EU_birthdate.SanctionEUBirthdate()
+        birth.regulationSummary = find_regulation_summary_json(item)
+        birth.remark = item['remark']
+        birth.additionalInformation = find_additional_info_json(item)
+        birth.regulationLanguage = item['regulationLanguage']
+        birth.countryDescription = item['countryDescription']
+        birth.countryIso2Code = item['countryIso2Code']
+        birth.place = item['place']
+        birth.region = item['region']
+        birth.yearRangeTo = item['yearRangeTo']
+        birth.yearRangeFrom = item['yearRangeFrom']
+        birth.year = item['year']
+        birth.monthOfYear = item['monthOfYear']
+        birth.dayOfMonth = item['dayOfMonth']
+        birth.birthdate = item['birthdate']
+        birth.zipCode = item['zipCode']
+        birth.city = item['city']
+        birth.calendarType = item['calendarType']
+        birth.circa = item['circa']
+        birthdate.append(birth)
+
+    for item in element.address:
+        add = sanction_EU_address.SanctionEUAddress()
+        #add.regulationSummary = find_regulation_summary_json(item)
+        add.remark = item['remark']
+        add.additionalInformation = find_additional_info_json(item)
+        info = []
+        for contact in item['contactInfo']:
+            contactInfo = sanction_EU_contactinfo.SanctionEUContactInfo()
+            contactInfo.key = contact['key']
+            contactInfo.value = contact['value']
+            info.append(contactInfo)
+        add.contactInfo = info
+        add.asAtListingTime = item['asAtListingTime']
+        add.zipCode = item['zipCode']
+        add.poBox = item['poBox']
+        add.city = item['city']
+        add.street = item['street']
+        add.regulationSummary = item['regulationSummary']
+        add.regulationLanguage = item['regulationLanguage']
+        add.countryDescription = item['countryDescription']
+        add.countryIso2Code = item['countryIso2Code']
+        add.place = item['place']
+        add.region = item['region']
+        address.append(add)
+
+    for item in element.identification:
+        document = sanction_EU_identificationType.SanctionEUIdentificationType()
+        document.regulationSummary = find_regulation_summary_json(item)
+        document.remark = item['remark']
+        document.additionalInformation = find_additional_info_json(item)
+        document.diplomatic = item['diplomatic']
+        document.knownExpired = item['knownExpired']
+        document.knownFalse = item['knownFalse']
+        document.reportedLost = item['reportedLost']
+        document.revokedByIssuer = item['revokedByIssuer']
+        document.regulationLanguage = item['regulationLanguage']
+        document.countryDescription = item['countryDescription']
+        document.identificationTypeDescription = item['identificationTypeDescription']
+        document.identificationTypeCode = item['identificationTypeCode']
+        document.region = item['region']
+        document.countryIso2Code = item['countryIso2Code']
+        document.validTo = item['validTo']
+        document.validFrom = item['validFrom']
+        document.number = item['number']
+        document.nameOnDocument = item['nameOnDocument']
+        document.latinNumber = item['latinNumber']
+        document.issuedBy = item['issuedBy']
+        document.issueDate = item['issueDate']
+        identification.append(document)
+
+    sanction.code = code
+    sanction.classificationCode = classificationCode
+    sanction.nameAlias = nameAlias
+    sanction.regulation = regulation
+    sanction.citizenship = citizenship
+    sanction.birthdate = birthdate
+    sanction.address = address
+    sanction.identification = identification
+    sanction.delistingDate = delistingDate
+    sanction.designationDate = designationDate
+    sanction.unitedNationId = unitedNationId
+    sanction.euReferenceNumber = euReferenceNumber
+    return sanction
+
+
+def find_additional_info_json(doc):
+    info = []
+    for item in doc['additionalInformation']:
+        additionalInformation = sanction_EU_additionailnfo.SanctionEUAdditionalInfo()
+        additionalInformation.key = item['key']
+        additionalInformation.value = item['value']
+        info.append(additionalInformation)
+    return info
+
+
+def find_regulation_summary_json(doc):
+    summary = sanction_EU_regulationSummary.SanctionEURegulationSummary()
+    item = doc['regulationSummary']
+    summary.publicationDate = item['publicationDate']
+    summary.numberTitle = item['numberTitle']
+    summary.publicationUrl = item['publicationUrl']
+    summary.regulationType = item['regulationType']
+    return summary
+

@@ -9,6 +9,9 @@ from Lexcovery_Sanctions import settings
 import requests
 import datetime
 import copy
+import aiohttp
+import asyncio
+import json
 
 SANCTIONS_SDN = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/USA/sdn.xml"
 SANCTIONS_CONS = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/USA/consolidated.xml"
@@ -19,36 +22,36 @@ XML_URL_CONS = "https://www.treasury.gov/ofac/downloads/consolidated/consolidate
 sanctions = []
 
 
-def get_list_xml(url):
-    response = requests.get(url)
+async def get_list_xml(url, session):
+    #response = requests.get(url)
+    response = await session.request(method='GET', url=url)
     if response.ok:
-        doc = response.content
+        doc = await response.read()
         d = copy.deepcopy(doc)
         return d
     else:
         return
 
 
-def import_data_from_web():
+async def import_data_from_web(session):
     global sanctions
     parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
     update_sdn = datetime.datetime.today()
     update_cons = datetime.datetime.today()
 
-    sdn_xml_text = get_list_xml(XML_URL_SDN)
-    cons_xml_text = get_list_xml(XML_URL_CONS)
+    sdn_xml_text = await get_list_xml(XML_URL_SDN, session)
+    cons_xml_text = await get_list_xml(XML_URL_CONS, session)
 
-    doc_id = 0
+    #doc_id = 0
 
     file_sdn = etree.fromstring(sdn_xml_text, parser=parser)
     file_cons = etree.fromstring(cons_xml_text, parser=parser)
 
+    await asyncio.gather(*[import_from_element_async(element) for element in file_sdn.getchildren()])
+    await asyncio.gather(*[import_from_element_async(element) for element in file_cons.getchildren()])
+
     for element in file_sdn.getchildren():
-        if element.tag == "{http://tempuri.org/sdnList.xsd}sdnEntry":
-            import_data_from_element(element, doc_id)
-            element.clear()
-            doc_id = doc_id + 1
         if element.tag == "{http://tempuri.org/sdnList.xsd}publshInformation":
             for item in element.getchildren():
                 item.tag = item.tag.split('}')[-1]
@@ -56,10 +59,6 @@ def import_data_from_web():
                     update_sdn = datetime.datetime.strptime(item.text, "%m/%d/%Y").date()
 
     for element in file_cons.getchildren():
-        if element.tag == "{http://tempuri.org/sdnList.xsd}sdnEntry":
-            import_data_from_element(element, doc_id)
-            element.clear()
-            doc_id = doc_id + 1
         if element.tag == "{http://tempuri.org/sdnList.xsd}publshInformation":
             for item in element.getchildren():
                 item.tag = item.tag.split('}')[-1]
@@ -75,8 +74,16 @@ def import_data_from_web():
 
     return sanctions, last_update
 
+async def import_from_element_async(element):
+    doc_id = 0
+    if element.tag == "{http://tempuri.org/sdnList.xsd}sdnEntry":
+        import_data_from_element(element, doc_id)
+        element.clear()
+        doc_id = doc_id + 1
 
-def import_data_from_xml():
+
+
+async def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)
     last_update = ''
@@ -122,7 +129,7 @@ def import_data_from_xml():
 def import_data_from_element(doc, doc_id):
     global sanctions
 
-    uid = 0
+    uid = ''
     firstName = ''
     lastName = ''
     title = ''
@@ -301,3 +308,99 @@ def import_data_from_element(doc, doc_id):
                                         placeOfBirthList, vesselInfo, doc_id)
     sanctions.append(sanction)
     #print(str(uid) + ' added successfully')
+
+
+def import_data_from_json(element):
+
+    uid = element.uid
+    firstName = element.firstName
+    lastName = element.lastName
+    title = element.title
+    sdnType = element.sdnType
+    remarks = element.remarks
+    programList = element.programList
+    idList = []
+    akaList = []
+    addressList = []
+    nationalityList = []
+    citizenshipList = []
+    dateOfBirthList = []
+    placeOfBirthList = []
+    vesselInfo = []
+
+    for item in element.idList:
+        passport = sanction_USA_document.SanctionUSADocument()
+        passport.uid = int(item['uid'])
+        passport.idType = item['idType']
+        passport.issueDate = item['issueDate']
+        passport.expirationDate = item['expirationDate']
+        passport.idNumber = item['idNumber']
+        passport.idCountry = item['idCountry']
+        idList.append(passport)
+
+    for item in element.akaList:
+        aka = sanction_USA_aka.SanctionUSAAka()
+        aka.uid = int(item['uid'])
+        aka.type = item['type']
+        aka.lastName = item['lastName']
+        aka.firstName = item['firstName']
+        aka.category = item['category']
+        aka.wholeName = item['wholeName']
+        akaList.append(aka)
+
+    for item in element.addressList:
+        address = sanction_USA_address.SanctionUSAAddress()
+        address.uid = int(item['uid'])
+        address.address1 = item['address1']
+        address.address2 = item['address2']
+        address.address3 = item['address3']
+        address.country = item['country']
+        address.city = item['city']
+        address.postalCode = item['postalCode']
+        address.stateOrProvince = item['stateOrProvince']
+        addressList.append(address)
+
+    for item in element.nationalityList:
+        nationality = sanction_USA_nationality.SanctionUSANationality()
+        nationality.uid = int(item['uid'])
+        nationality.country = item['country']
+        nationality.mainEntry = item['mainEntry']
+        nationalityList.append(nationality)
+
+    for item in element.citizenshipList:
+        nationality = sanction_USA_nationality.SanctionUSANationality()
+        nationality.uid = int(item['uid'])
+        nationality.country = item['country']
+        nationality.mainEntry = item['mainEntry']
+        citizenshipList.append(nationality)
+
+    for item in element.dateOfBirthList:
+        dateOfBirth = sanction_USA_dateofbirth.SanctionUSADateOfBirth()
+        dateOfBirth.uid = int(item['uid'])
+        dateOfBirth.dateOfBirth = item['dateOfBirth']
+        dateOfBirth.mainEntry = item['mainEntry']
+        dateOfBirthList.append(dateOfBirth)
+
+    for item in element.placeOfBirthList:
+        placeOfBirth = sanction_USA_placeofbirth.SanctionUSAPlaceOfBirth()
+        placeOfBirth.uid = int(item['uid'])
+        placeOfBirth.placeOfBirth = item['placeOfBirth']
+        placeOfBirth.mainEntry = item['mainEntry']
+        placeOfBirthList.append(placeOfBirth)
+
+    for item in element.vesselInfo:
+        vessel = sanction_USA_vessel.SanctionUSAVessel()
+        vessel.uid = int(item['uid'])
+        vessel.vesselOwner = item['vesselOwner']
+        vessel.vesselType = item['vesselType']
+        vessel.vesselFlag = item['vesselFlag']
+        vessel.tonnage = item['tonnage']
+        vessel.callSign = item['callSign']
+        vessel.grossRegisteredTonnage = item['grossRegisteredTonnage']
+        vesselInfo.append(vessel)
+
+    return sanction_USA.SanctionUSA(uid, firstName, lastName, title, sdnType, remarks, programList, idList,
+                                        akaList, addressList, nationalityList, citizenshipList, dateOfBirthList,
+                                        placeOfBirthList, vesselInfo, element.id)
+
+
