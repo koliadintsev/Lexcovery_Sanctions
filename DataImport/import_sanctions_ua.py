@@ -156,18 +156,18 @@ def import_data_from_json(element):
 
     id = element.id
     act_number = element.act_number
-    start_date = parse(element.start_date).date()
+    start_date = ''
     action = element.action
     changes = element.changes
     number = element.number
     restrictions = element.restrictions
     term = element.term
-    end_date = parse(element.end_date).date()
+    end_date = ''
     name_ukr = element.name_ukr
     name_orig = element.name_orig
     name_alt = element.name_alt
     name_latin = element.name_latin
-    date_of_birth = parse(element.date_of_birth).date()
+    date_of_birth = ''
     citizenship = element.citizenship
     place_of_birth = element.place_of_birth
     work = element.work
@@ -178,6 +178,13 @@ def import_data_from_json(element):
     address_additional = element.address_additional
     remarks = element.remarks
     person = element.person
+
+    if element.start_date is not None:
+        start_date = parse(element.start_date).date()
+    if element.end_date is not None:
+        end_date = parse(element.end_date).date()
+    if element.date_of_birth is not None:
+        date_of_birth = parse(element.date_of_birth).date()
 
     sanction = sanction_ua.SanctionUA(act_number, start_date, action, changes, number, restrictions,
                  term, end_date, name_ukr, name_orig, name_alt, name_latin, date_of_birth,
