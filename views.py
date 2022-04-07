@@ -12,9 +12,10 @@ def main_view(request):
     last_update_us = elasticsearch_handler.last_update_us
     last_update_uk = elasticsearch_handler.last_update_uk
     last_update_eu = elasticsearch_handler.last_update_eu
+    last_update_ua = elasticsearch_handler.last_update_ua
 
     return render(request, 'main.html', {'last_update_us': last_update_us, 'last_update_uk': last_update_uk,
-                                         'last_update_eu': last_update_eu})
+                                         'last_update_eu': last_update_eu, 'last_update_ua': last_update_ua})
 
 
 async def search(request):
