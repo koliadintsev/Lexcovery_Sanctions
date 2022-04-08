@@ -11,15 +11,33 @@ from DataModel.UK import sanction_UK_Entity
 from Lexcovery_Sanctions.settings import STATIC_ROOT
 from Lexcovery_Sanctions import settings
 import requests
+from bs4 import BeautifulSoup
 
 SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/UK/UK_sanctions_list.xml"
-XML_URL = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1065123/UK_sanctions_list.xml"
+XML_URL = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1067399/UK_Sanctions_List.xml"
+SANCTIONS_WEBSITE = 'https://www.gov.uk/government/publications/the-uk-sanctions-list'
 sanctions = []
+
+
+async def find_link_xml(session):
+    response = await session.request(method='GET', url=SANCTIONS_WEBSITE)
+    xml_url_web = XML_URL
+    if response.ok:
+        doc = await response.text()
+        text = BeautifulSoup(doc, 'html.parser')
+        for link in text.find_all('a'):
+            url = link.get('href')
+            if 'UK_Sanctions_List.xml' in url:
+                xml_url_web = url
+        return xml_url_web
+    else:
+        return XML_URL
 
 
 async def get_list_xml(session):
     #response = requests.get(XML_URL)
-    response = await session.request(method='GET', url=XML_URL)
+    link = await find_link_xml(session)
+    response = await session.request(method='GET', url=link)
     if response.ok:
         doc = await response.read()
         d = copy.deepcopy(doc)

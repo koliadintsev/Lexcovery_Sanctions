@@ -280,10 +280,10 @@ async def import_one_list(list_name, session):
         except Exception:
             sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_xml()
     elif list_name == "UK":
-        try:
-            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
-        except Exception:
-            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
+        #try:
+        sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
+        #except Exception:
+            #sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
     elif list_name == "EU":
         try:
             sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_web(session)
