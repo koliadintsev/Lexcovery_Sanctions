@@ -67,8 +67,7 @@ async def import_data_from_web(session):
                 table_start = row_num + 1
                 #print(sheet.name + ': ' + str(table_start))
                 # break
-            if row_num >= table_start:
-                await import_from_element_async(row_value, sheet.row_values(table_start - 1), sheet.name)
+        await asyncio.gather(*[import_from_element_async(sheet.row_values(i), sheet.row_values(table_start - 1), sheet.name) for i in range(table_start, sheet.nrows)])
 
     # print('import finished')
     return sanctions, last_update
@@ -99,8 +98,7 @@ async def import_data_from_xls():
                 table_start = row_num + 1
                 #print(sheet.name + ': ' + str(table_start))
                 # break
-            if row_num >= table_start:
-                await import_from_element_async(row_value, sheet.row_values(table_start - 1), sheet.name)
+        await asyncio.gather(*[import_from_element_async(sheet.row_values(i), sheet.row_values(table_start - 1), sheet.name) for i in range(table_start, sheet.nrows)])
 
     """
     tree = ET.fromstring(file.read().strip())

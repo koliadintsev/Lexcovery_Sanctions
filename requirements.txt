@@ -41,4 +41,5 @@ sqlparse==0.4.2
 typish==1.9.3
 urlfetch==1.2.2
 urllib3==1.26.9
+xlrd==2.0.1
 yarl==1.7.2

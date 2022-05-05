@@ -10,7 +10,7 @@ import uuid
 from elasticsearch_dsl import connections, Index, Search, analyzer, Q
 import re
 import jsons
-from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp
+from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp, import_sanctions_au
 from DataImport import import_sanctions_usa, import_sanctions_ua, import_sanctions_uk_consolidated
 import copy
 from Lexcovery_Sanctions import settings
@@ -40,6 +40,7 @@ sanctions_UK = []
 sanctions_UK_Cons = []
 sanctions_UA = []
 sanctions_JP = []
+sanctions_AU = []
 
 bulk_USA = []
 bulk_UK = []
@@ -47,6 +48,7 @@ bulk_UK_Cons = []
 bulk_EU = []
 bulk_UA = []
 bulk_JP = []
+bulk_AU = []
 
 last_update_us = ''
 last_update_uk = ''
@@ -54,6 +56,7 @@ last_update_uk_cons = ''
 last_update_eu = ''
 last_update_ua = ''
 last_update_jp = ''
+last_update_au = ''
 
 DEBUG = False
 
@@ -86,6 +89,7 @@ async def create_index():
     global sanctions_UK
     global sanctions_UA
     global sanctions_JP
+    global sanctions_AU
 
     client = initialize_client()
 
@@ -98,6 +102,7 @@ async def create_index():
     global bulk_EU
     global bulk_UA
     global bulk_JP
+    global bulk_AU
 
     # Создаем индекс
     client.indices.create(index="sanctions_usa")
@@ -106,10 +111,11 @@ async def create_index():
     client.indices.create(index="sanctions_eu")
     client.indices.create(index="sanctions_ua")
     client.indices.create(index="sanctions_jp")
+    client.indices.create(index="sanctions_au")
 
     # Вносим имена в индекс
 
-    LIST_SANCTIONS = ["US", "UK", "UK_Cons", "EU", "UA", "JP"]
+    LIST_SANCTIONS = ["US", "UK", "UK_Cons", "EU", "UA", "JP", "AU"]
 
     await asyncio.gather(*[sanction_to_json_list(list_name) for list_name in LIST_SANCTIONS])
     """
@@ -131,6 +137,7 @@ async def create_index():
     helpers.bulk(client, bulk_EU, chunk_size=1000, request_timeout=200, index='sanctions_eu')
     helpers.bulk(client, bulk_UA, chunk_size=1000, request_timeout=200, index='sanctions_ua')
     helpers.bulk(client, bulk_JP, chunk_size=1000, request_timeout=200, index='sanctions_jp')
+    helpers.bulk(client, bulk_AU, chunk_size=1000, request_timeout=200, index='sanctions_au')
     #print('Indexes created')
 
 
@@ -153,6 +160,8 @@ async def sanction_to_json_list(list_name):
         await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UA])
     elif list_name == "JP":
         await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_JP])
+    elif list_name == "AU":
+        await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_AU])
 
 
 async def sanction_to_json(sanction, list_name):
@@ -161,6 +170,7 @@ async def sanction_to_json(sanction, list_name):
     global bulk_EU
     global bulk_UA
     global bulk_JP
+    global bulk_AU
 
     if list_name == "US":
         dict = jsons.dump(sanction)
@@ -180,6 +190,9 @@ async def sanction_to_json(sanction, list_name):
     elif list_name == "JP":
         dict = jsons.dump(sanction)
         bulk_JP.append(copy.deepcopy(dict))
+    elif list_name == "AU":
+        dict = jsons.dump(sanction)
+        bulk_AU.append(copy.deepcopy(dict))
 
 
 def delete_index():
@@ -191,6 +204,7 @@ def delete_index():
         client.indices.delete(index="sanctions_eu")
         client.indices.delete(index="sanctions_ua")
         client.indices.delete(index="sanctions_jp")
+        client.indices.delete(index="sanctions_au")
     except exceptions.TransportError:
         client.close()
 
@@ -202,6 +216,7 @@ def search_match_request(request):
     result_eu = []
     result_ua = []
     result_jp = []
+    result_au = []
     query = Q("multi_match", query = request, type='cross_fields', operator='and')
 
     s = Search(index="sanctions_usa").using(client).query(query).source(["id"])
@@ -240,7 +255,13 @@ def search_match_request(request):
         result_jp.append(hit.id)
         #print(hit.meta.index)
 
-    return result_usa, result_uk, result_eu, result_ua, result_jp
+    s = Search(index="sanctions_au").using(client).query(query).source(["id"])
+    s.execute()
+    for hit in s:
+        result_au.append(hit.id)
+        #print(hit.meta.index)
+
+    return result_usa, result_uk, result_eu, result_ua, result_jp, result_au
 
 
 async def search_fuzzy_request(request):
@@ -292,6 +313,9 @@ async def search_fuzzy_request(request):
         elif doc["index"] == "sanctions_jp":
             sanction = import_sanctions_jp.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
+        elif doc["index"] == "sanctions_au":
+            sanction = import_sanctions_au.import_data_from_json(hit)
+            result.append(copy.deepcopy(sanction.webify()))
     return result
 
 
@@ -313,7 +337,7 @@ async def import_sanctions_lists():
     global last_update_ua
     global last_update_jp
 
-    LIST_SANCTIONS = ["US", "UK", "UK_Cons", "EU", "UA", "JP"]
+    LIST_SANCTIONS = ["US", "UK", "UK_Cons", "EU", "UA", "JP", "AU"]
 
     #async with ClientSession() as session:
         #for name in LIST_SANCTIONS:
@@ -330,6 +354,7 @@ async def import_one_list(list_name, session):
     global sanctions_UA
     global sanctions_JP
     global sanctions_UK_Cons
+    global sanctions_AU
 
     global last_update_us
     global last_update_uk
@@ -337,6 +362,7 @@ async def import_one_list(list_name, session):
     global last_update_ua
     global last_update_jp
     global last_update_uk_cons
+    global last_update_au
 
     if list_name == "US":
         try:
@@ -368,3 +394,8 @@ async def import_one_list(list_name, session):
             sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_web(session)
         except Exception:
             sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_xls()
+    elif list_name == "AU":
+        try:
+            sanctions_AU, last_update_au = await import_sanctions_au.import_data_from_web(session)
+        except Exception:
+            sanctions_AU, last_update_au = await import_sanctions_au.import_data_from_xls()

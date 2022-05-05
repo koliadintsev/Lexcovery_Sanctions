@@ -30,7 +30,7 @@ class SanctionUKConsolidated:
     def webify(self):
         main_name = self.name
         names = self.alias_type + ' ' + self.alias_quality + '\n' + self.title + '\n' + self.name_non_latin_script
-        program = self.regime + ' GroupID: ' + self.group_id + '\n' + 'Start:' + self.designation_date + '; \n' + \
+        program = self.regime + ' GroupID: ' + self.group_id + '\n' + 'Start: ' + self.designation_date + '; \n' + \
                   'Last updated: ' + self.last_update
         nationality = self.nationality
         address = self.address
