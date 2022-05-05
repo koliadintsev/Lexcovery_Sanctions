@@ -10,7 +10,7 @@ import uuid
 from elasticsearch_dsl import connections, Index, Search, analyzer, Q
 import re
 import jsons
-from DataImport import import_sanctions_eu, import_sanctions_uk
+from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp
 from DataImport import import_sanctions_usa, import_sanctions_ua
 from DataModel.USA import sanction_USA
 from DataModel.UK import sanction_UK
@@ -41,16 +41,19 @@ sanctions_USA = []
 sanctions_EU = []
 sanctions_UK = []
 sanctions_UA = []
+sanctions_JP = []
 
 bulk_USA = []
 bulk_UK = []
 bulk_EU = []
 bulk_UA = []
+bulk_JP = []
 
 last_update_us = ''
 last_update_uk = ''
 last_update_eu = ''
 last_update_ua = ''
+last_update_jp = ''
 
 DEBUG = False
 
@@ -81,6 +84,8 @@ async def create_index():
     global sanctions_USA
     global sanctions_EU
     global sanctions_UK
+    global sanctions_UA
+    global sanctions_JP
 
     client = initialize_client()
 
@@ -91,16 +96,19 @@ async def create_index():
     global bulk_USA
     global bulk_UK
     global bulk_EU
+    global bulk_UA
+    global bulk_JP
 
     # Создаем индекс
     client.indices.create(index="sanctions_usa")
     client.indices.create(index="sanctions_uk")
     client.indices.create(index="sanctions_eu")
     client.indices.create(index="sanctions_ua")
+    client.indices.create(index="sanctions_jp")
 
     # Вносим имена в индекс
 
-    LIST_SANCTIONS = ["US", "UK", "EU", "UA"]
+    LIST_SANCTIONS = ["US", "UK", "EU", "UA", "JP"]
 
     await asyncio.gather(*[sanction_to_json_list(list_name) for list_name in LIST_SANCTIONS])
     """
@@ -120,7 +128,8 @@ async def create_index():
     helpers.bulk(client, bulk_UK, chunk_size=1000, request_timeout=200, index='sanctions_uk')
     helpers.bulk(client, bulk_EU, chunk_size=1000, request_timeout=200, index='sanctions_eu')
     helpers.bulk(client, bulk_UA, chunk_size=1000, request_timeout=200, index='sanctions_ua')
-    print('Indexes created')
+    helpers.bulk(client, bulk_JP, chunk_size=1000, request_timeout=200, index='sanctions_jp')
+    #print('Indexes created')
 
 
 async def sanction_to_json_list(list_name):
@@ -128,6 +137,7 @@ async def sanction_to_json_list(list_name):
     global sanctions_EU
     global sanctions_UK
     global sanctions_UA
+    global sanctions_JP
 
     if list_name == "US":
         await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_USA])
@@ -137,6 +147,8 @@ async def sanction_to_json_list(list_name):
         await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_EU])
     elif list_name == "UA":
         await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UA])
+    elif list_name == "JP":
+        await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_JP])
 
 
 async def sanction_to_json(sanction, list_name):
@@ -144,6 +156,7 @@ async def sanction_to_json(sanction, list_name):
     global bulk_UK
     global bulk_EU
     global bulk_UA
+    global bulk_JP
 
     if list_name == "US":
         dict = jsons.dump(sanction)
@@ -157,6 +170,9 @@ async def sanction_to_json(sanction, list_name):
     elif list_name == "UA":
         dict = jsons.dump(sanction)
         bulk_UA.append(copy.deepcopy(dict))
+    elif list_name == "JP":
+        dict = jsons.dump(sanction)
+        bulk_JP.append(copy.deepcopy(dict))
 
 
 def delete_index():
@@ -166,6 +182,7 @@ def delete_index():
         client.indices.delete(index="sanctions_uk")
         client.indices.delete(index="sanctions_eu")
         client.indices.delete(index="sanctions_ua")
+        client.indices.delete(index="sanctions_jp")
     except exceptions.TransportError:
         client.close()
 
@@ -176,6 +193,7 @@ def search_match_request(request):
     result_uk = []
     result_eu = []
     result_ua = []
+    result_jp = []
     query = Q("multi_match", query = request, type='cross_fields', operator='and')
 
     s = Search(index="sanctions_usa").using(client).query(query).source(["id"])
@@ -202,7 +220,13 @@ def search_match_request(request):
         result_ua.append(hit.id)
         #print(hit.meta.index)
 
-    return result_usa, result_uk, result_eu, result_ua
+    s = Search(index="sanctions_jp").using(client).query(query).source(["id"])
+    s.execute()
+    for hit in s:
+        result_jp.append(hit.id)
+        #print(hit.meta.index)
+
+    return result_usa, result_uk, result_eu, result_ua, result_jp
 
 
 async def search_fuzzy_request(request):
@@ -233,6 +257,9 @@ async def search_fuzzy_request(request):
         elif doc["index"] == "sanctions_ua":
             sanction = import_sanctions_ua.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
+        elif doc["index"] == "sanctions_jp":
+            sanction = import_sanctions_jp.import_data_from_json(hit)
+            result.append(copy.deepcopy(sanction.webify()))
 
     return result
 
@@ -247,13 +274,15 @@ async def import_sanctions_lists():
     global sanctions_EU
     global sanctions_UK
     global sanctions_UA
+    global sanctions_JP
 
     global last_update_us
     global last_update_uk
     global last_update_eu
     global last_update_ua
+    global last_update_jp
 
-    LIST_SANCTIONS = ["US", "UK", "EU", "UA"]
+    LIST_SANCTIONS = ["US", "UK", "EU", "UA", "JP"]
 
     #async with ClientSession() as session:
         #for name in LIST_SANCTIONS:
@@ -268,11 +297,13 @@ async def import_one_list(list_name, session):
     global sanctions_EU
     global sanctions_UK
     global sanctions_UA
+    global sanctions_JP
 
     global last_update_us
     global last_update_uk
     global last_update_eu
     global last_update_ua
+    global last_update_jp
 
     if list_name == "US":
         try:
@@ -280,10 +311,10 @@ async def import_one_list(list_name, session):
         except Exception:
             sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_xml()
     elif list_name == "UK":
-        #try:
-        sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
-        #except Exception:
-            #sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
+        try:
+            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
+        except Exception:
+            sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
     elif list_name == "EU":
         try:
             sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_web(session)
@@ -294,3 +325,8 @@ async def import_one_list(list_name, session):
             sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_web(session)
         except Exception:
             sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_xls()
+    elif list_name == "JP":
+        try:
+            sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_web(session)
+        except Exception:
+            sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_xls()

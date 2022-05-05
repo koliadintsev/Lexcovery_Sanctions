@@ -1,5 +1,5 @@
 from Search import elasticsearch_handler
-from DataImport import translit, import_sanctions_ua, import_sanctions_uk
+from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp
 
 #print(translit.is_latin('hui'))
 #print(translit.is_latin('хуй'))
@@ -14,7 +14,10 @@ from DataImport import translit, import_sanctions_ua, import_sanctions_uk
 #print(translit.to_latin('Федеральное государственное бюджетное учреждение науки "Федеральный исследовательский центр "Институт биологии южных морей им. А.О. Ковалевского РАН"', 'ru'))
 
 #r1, d1 = import_sanctions_ua.import_data_from_xls()
-r = import_sanctions_uk.find_link_xml()
+#r = import_sanctions_uk.find_link_xml()
+
+#r = import_sanctions_jp.find_link_xls(None)
+#r1, d1 = import_sanctions_jp.import_data_from_xls()
 print('a')
 
 

@@ -10,6 +10,7 @@ import requests
 from dateutil.parser import parse
 import aiohttp
 import asyncio
+from io import BytesIO
 
 SANCTIONS_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/UA/sanctions.xlsx"
 sanctions = []
@@ -34,7 +35,8 @@ async def import_data_from_web(session):
     last_update = today.strftime("%d/%m/%Y")
 
     # Define variable to load the workbook
-    workbook = openpyxl.load_workbook(SANCTIONS_LIST)
+    xls_file = await get_list_xls(session)
+    workbook = openpyxl.load_workbook(BytesIO(xls_file))
 
     # Define variable to read the active sheet:
     for sheet in workbook.worksheets:
