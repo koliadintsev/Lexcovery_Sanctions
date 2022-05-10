@@ -23,16 +23,26 @@ class SanctionJP:
         self.number = number
         self.start_date = start_date
         self.id = id
+        self.search_fields = [self.name_jp, self.name_eng, self.alias]
 
 
     def webify(self):
         main_name = self.name_eng
         names = 'Main name (jp): ' + self.name_jp + ';\n' + 'Other names:\n' + self.alias
-        program = 'Program (jp): ' + self.program + ';\n' + 'Number: ' + self.number + ';\n' + 'Start: ' + self.start_date
-
+        start_date = ''
+        if isinstance(self.start_date, datetime.date):
+            start_date = self.start_date.strftime("%d/%m/%Y")
+        else:
+            start_date = self.start_date
+        program = 'Program (jp): ' + self.program + ';\n' + 'Number: ' + self.number + ';\n' + 'Start: ' + start_date
         nationality = self.country
         address = self.address
-        personal_details = 'Position: ' + self.position + ';\n' + 'Birth details:\n' + self.date_of_birth + ';\n' + \
+        date_of_birth = ''
+        if isinstance(self.date_of_birth, datetime.date):
+            date_of_birth = self.date_of_birth.strftime("%d/%m/%Y")
+        else:
+            date_of_birth = self.date_of_birth
+        personal_details = 'Position: ' + self.position + ';\n' + 'Birth details:\n' + date_of_birth + ';\n' + \
                            self.place_of_birth + ';\n' + 'ID:\n' + self.id_details + 'Contacts:\n' + self.contacts
         additional_info = self.remark
 

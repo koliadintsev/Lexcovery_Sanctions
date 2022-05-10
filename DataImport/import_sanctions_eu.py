@@ -137,12 +137,8 @@ def import_data_from_element(doc, doc_id):
     designationDate = doc.get('designationDate')
     unitedNationId = doc.get('unitedNationId')
     euReferenceNumber = doc.get('euReferenceNumber')
-
-    sanction = sanction_EU.SanctionEU()
-
-    sanction.id = doc_id
-    sanction.remark = find_remark(doc)
-    sanction.additionalInformation = find_additional_info(doc)
+    remark = find_remark(doc)
+    additionalInformation = find_additional_info(doc)
 
     for item in doc.getchildren():
         item.tag=item.tag.split('}')[-1]
@@ -276,19 +272,12 @@ def import_data_from_element(doc, doc_id):
             document.issueDate = item.get('issueDate')
             identification.append(document)
 
-    sanction.code = code
-    sanction.classificationCode = classificationCode
-    sanction.nameAlias = nameAlias
-    sanction.regulation = regulation
-    sanction.citizenship = citizenship
-    sanction.birthdate = birthdate
-    sanction.address = address
-    sanction.identification = identification
-    sanction.delistingDate = delistingDate
-    sanction.designationDate = designationDate
-    sanction.unitedNationId = unitedNationId
-    sanction.euReferenceNumber = euReferenceNumber
-
+    sanction = sanction_EU.SanctionEU(code=code, classificationCode=classificationCode, nameAlias=nameAlias,
+                                      citizenship=citizenship, birthdate=birthdate, address=address, regulation=regulation,
+                                      identification=identification, delistingDate=delistingDate, designationDate=designationDate,
+                                      unitedNationId=unitedNationId, euReferenceNumber=euReferenceNumber, id=doc_id)
+    sanction.additionalInformation = additionalInformation
+    sanction.remark = remark
     sanctions.append(sanction)
     #print(euReferenceNumber + ' added successfully')
 

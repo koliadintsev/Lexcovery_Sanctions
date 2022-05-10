@@ -1,3 +1,4 @@
+import datetime
 from DataModel import sanction_web
 
 
@@ -26,15 +27,31 @@ class SanctionUKConsolidated:
         self.name_non_latin_script = name_non_latin_script
         self.title = title
         self.name = name
+        self.search_fields = [self.name, self.name_non_latin_script]
 
     def webify(self):
         main_name = self.name
         names = self.alias_type + ' ' + self.alias_quality + '\n' + self.title + '\n' + self.name_non_latin_script
-        program = self.regime + ' GroupID: ' + self.group_id + '\n' + 'Start: ' + self.designation_date + '; \n' + \
-                  'Last updated: ' + self.last_update
+        designation_date = ''
+        if isinstance(self.designation_date, datetime.date):
+            designation_date = self.designation_date.strftime("%d/%m/%Y")
+        else:
+            designation_date = self.designation_date
+        last_update = ''
+        if isinstance(self.last_update, datetime.date):
+            last_update = self.last_update.strftime("%d/%m/%Y")
+        else:
+            last_update = self.last_update
+        program = self.regime + ' GroupID: ' + self.group_id + '\n' + 'Start: ' + designation_date + '; \n' + \
+                  'Last updated: ' + last_update
         nationality = self.nationality
         address = self.address
-        personal_details = 'Position: ' + self.position + '; \n' + 'Date of Birth: ' + self.date_of_birth + '\n' + \
+        date_of_birth = ''
+        if isinstance(self.date_of_birth, datetime.date):
+            date_of_birth = self.date_of_birth.strftime("%d/%m/%Y")
+        else:
+            date_of_birth = self.date_of_birth
+        personal_details = 'Position: ' + self.position + '; \n' + 'Date of Birth: ' + date_of_birth + '\n' + \
                            'Place of Birth: ' + self.place_of_birth + '\n' + 'Identification: ' + self.id_details
         additional_info = self.additional_info + '; \n' + self.group_type
 

@@ -80,13 +80,23 @@ def import_data_from_element(row, element_id):
             value = ''
         doc.append(value)
 
-    control_date = str(doc[11])
+    control_date = ''
+    if doc[11]:
+        try:
+            control_date = xlrd.xldate_as_datetime(float(doc[11]), 0).date().strftime("%d/%m/%Y")
+        except Exception:
+            control_date = doc[11]
     committees = doc[10]
     listing_information = doc[9]
     additional_information = doc[8]
     citizenship = doc[6]
     place_of_birth = doc[5]
-    date_of_birth = str(doc[4])
+    date_of_birth = ''
+    if doc[4]:
+        try:
+            date_of_birth = xlrd.xldate_as_datetime(float(doc[4]), 0).date().strftime("%d/%m/%Y")
+        except Exception:
+            date_of_birth = doc[4]
     name_type = doc[3]
     entity = doc[2]
     name = doc[1]
@@ -115,7 +125,6 @@ def import_data_from_json(element):
     name = element.name
     number = element.number
     address = element.address
-
     sanction = sanction_au.SanctionAU(number=number, name=name, entity=entity, name_type=name_type,
                                       date_of_birth=date_of_birth,
                                       place_of_birth=place_of_birth, citizenship=citizenship, address=address,

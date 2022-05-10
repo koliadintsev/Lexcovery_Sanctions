@@ -31,6 +31,9 @@ class SanctionEU(SanctionEUGeneric):
         self.nameAlias = nameAlias
         self.classificationCode = classificationCode
         self.code = code
+        self.search_fields = []
+        for name in self.nameAlias:
+            self.search_fields.append(name.wholeName)
 
     def webify(self):
 

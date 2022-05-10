@@ -81,8 +81,6 @@ async def import_from_element_async(element):
         element.clear()
         doc_id = doc_id + 1
 
-
-
 async def import_data_from_xml():
     global sanctions
     #parser = etree.XMLParser(recover=True, huge_tree=True)

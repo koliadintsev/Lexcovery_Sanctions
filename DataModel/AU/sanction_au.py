@@ -21,15 +21,26 @@ class SanctionAU:
         self.name = name
         self.number = number
         self.address = address
+        self.search_fields = [self.name]
 
 
     def webify(self):
         main_name = self.name
         names = self.entity + '\n' + self.name_type
-        program = self.listing_information + ';\n' + 'Committee: ' + self.committees + ';\n' + 'Start: ' + self.control_date
+        control_date = ''
+        if isinstance(self.control_date, datetime.date):
+            control_date = self.control_date.strftime("%d/%m/%Y")
+        else:
+            control_date = self.control_date
+        program = self.listing_information + ';\n' + 'Committee: ' + self.committees + ';\n' + 'Start: ' + control_date
         nationality = self.citizenship
         address = self.address
-        personal_details = 'Date of Birth: ' + self.date_of_birth + '\n' + 'Place of Birth: ' + self.place_of_birth
+        date_of_birth = ''
+        if isinstance(self.date_of_birth, datetime.date):
+            date_of_birth = self.date_of_birth.strftime("%d/%m/%Y")
+        else:
+            date_of_birth = self.date_of_birth
+        personal_details = 'Date of Birth: ' + date_of_birth + '\n' + 'Place of Birth: ' + self.place_of_birth
         additional_info = self.additional_information
 
         sanction = sanction_web.SanctionWeb(main_name=main_name, names=names, sanctioned_by='au',

@@ -131,8 +131,7 @@ def import_data_from_json(element):
     element_id = element.id
     group_id = element.group_id
     last_update = element.last_update
-    designation_date = element.designation_date
-    listed_on = element.listed_on
+
     regime = element.regime
     alias_quality = element.alias_quality
     alias_type = element.alias_type
@@ -143,10 +142,23 @@ def import_data_from_json(element):
     id_details = element.id_details
     nationality = element.nationality
     place_of_birth = element.place_of_birth
-    date_of_birth = element.date_of_birth
     name_non_latin_script = element.name_non_latin_script
     title = element.title
     name = element.name
+    designation_date = ''
+    listed_on = ''
+    date_of_birth = ''
+
+    if element.designation_date is not None:
+        designation_date = parse(element.designation_date).date()
+    if element.listed_on is not None:
+        listed_on = parse(element.listed_on).date()
+    if element.date_of_birth is not None:
+        try:
+            date_of_birth = parse(element.date_of_birth).date()
+        except Exception:
+            date_of_birth = element.date_of_birth
+
 
     sanction = sanction_UK_consolidated.SanctionUKConsolidated(name=name, title=title,
                                                                name_non_latin_script=name_non_latin_script,

@@ -46,6 +46,9 @@ class SanctionUSA:
         else:
             name = firstName + ' ' + lastName
         self.wholeName = name
+        self.search_fields = [self.wholeName]
+        for n in self.akaList:
+            self.search_fields.append(n.wholeName)
 
     def webify(self):
 

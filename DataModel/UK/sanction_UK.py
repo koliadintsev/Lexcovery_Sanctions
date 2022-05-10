@@ -42,6 +42,11 @@ class SanctionUK:
         self.UniqueID = UniqueID
         self.DateDesignated = DateDesignated
         self.LastUpdated = LastUpdated
+        self.search_fields = []
+        for name in self.Names:
+            self.search_fields.append(name.Name)
+        for name in self.NonLatinNames:
+            self.search_fields.append(name)
 
     def webify(self):
 

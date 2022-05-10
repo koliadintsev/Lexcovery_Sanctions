@@ -119,7 +119,12 @@ def import_data_from_element(row, headers, sheet_title, element_id):
             value = ''
         doc.append(value)
 
-    start_date = str(doc[0])
+    start_date = ''
+    try:
+        start_date_text = doc[0].split('.')
+        start_date = datetime.date(int(start_date_text[0]), int(start_date_text[1]), int(start_date_text[2])).strftime("%d/%m/%Y")
+    except Exception:
+        start_date = doc[0]
     number = str(doc[1])
     name_jp = str(doc[2])
     if name_jp == '':
@@ -145,7 +150,11 @@ def import_data_from_element(row, headers, sheet_title, element_id):
 
         if value != '':
             if header == '生年月日・出生地' or header == '生年月日':
-                date_of_birth = str(value)
+                if value:
+                    try:
+                        date_of_birth = xlrd.xldate_as_datetime(float(value), 0).date().strftime("%d/%m/%Y")
+                    except Exception:
+                        date_of_birth = value
             elif header == 'その他の情報' or header == '詳細':
                 remark = remark + str(value) + '\n'
             elif header == '別名・別称' or header == '別名' or header == '別称・旧称' or header == '別称・別名' or \
@@ -175,6 +184,7 @@ def import_data_from_element(row, headers, sheet_title, element_id):
                                       program=program, remark=remark)
     sanctions.append(sanction)
 
+
 def import_data_from_json(element):
 
     contacts = element.contacts
@@ -185,13 +195,13 @@ def import_data_from_json(element):
     country = element.country
     position = element.position
     place_of_birth = element.place_of_birth
-    date_of_birth = element.date_of_birth
     alias = element.alias
     name_eng = element.name_eng
     name_jp = element.name_jp
     number = element.number
-    start_date = element.start_date
     element_id = element.id
+    date_of_birth = element.date_of_birth
+    start_date = element.start_date
 
     sanction = sanction_jp.SanctionJP(id=element_id, start_date=start_date, number=number, name_jp=name_jp, name_eng=name_eng,
                                       alias=alias, date_of_birth=date_of_birth,

@@ -1,5 +1,5 @@
 from Search import elasticsearch_handler
-from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp
+from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp, import_sanctions_ca, import_sanctions_usa_consolidated
 
 #print(translit.is_latin('hui'))
 #print(translit.is_latin('хуй'))
@@ -18,6 +18,11 @@ from DataImport import translit, import_sanctions_ua, import_sanctions_uk, impor
 
 #r = import_sanctions_jp.find_link_xls(None)
 #r1, d1 = import_sanctions_jp.import_data_from_xls()
+
+#r1, d1 = import_sanctions_ca.import_data_from_xml()
+
+#r1, d1 = import_sanctions_usa_consolidated.import_data_from_tsv()
+
 print('a')
 
 

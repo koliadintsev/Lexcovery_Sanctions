@@ -33,6 +33,7 @@ class SanctionUA:
         self.start_date = start_date
         self.act_number = act_number
         self.remarks = remarks
+        self.search_fields = [self.name_ukr, self.name_alt, self.name_orig, self.name_latin]
 
     def webify(self):
         main_name = self.name_latin

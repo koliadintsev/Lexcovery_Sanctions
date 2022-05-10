@@ -15,10 +15,13 @@ def main_view(request):
     last_update_ua = elasticsearch_handler.last_update_ua
     last_update_uk_cons = elasticsearch_handler.last_update_uk_cons
     last_update_jp = elasticsearch_handler.last_update_jp
+    last_update_au = elasticsearch_handler.last_update_au
+    last_update_ca = elasticsearch_handler.last_update_ca
 
     return render(request, 'main.html', {'last_update_us': last_update_us, 'last_update_uk': last_update_uk,
                                          'last_update_eu': last_update_eu, 'last_update_ua': last_update_ua,
-                                         'last_update_uk_cons': last_update_uk_cons, 'last_update_jp': last_update_jp})
+                                         'last_update_uk_cons': last_update_uk_cons, 'last_update_jp': last_update_jp,
+                                         'last_update_au': last_update_au, 'last_update_ca': last_update_ca})
 
 
 async def search(request):
