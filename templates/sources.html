@@ -1,0 +1,128 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Sanctions Search {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="pcoded-content">
+    <div class="pcoded-inner-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="m-b-10">Data Sources</h5>
+                        </div>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="javascript:">Data Sources</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <!-- [ stiped-table ] start -->
+                    <div class="col-xl-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Data Sources</h5>
+                                <span class="d-block m-t-5">Please find all data sources below</span>
+                            </div>
+                            <div class="card-block table-border-style">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Country</th>
+                                                <th>Sanctions List</th>
+                                                <th>Last Update</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <th scope="row">1</th>
+                                                <td>United States</td>
+                                                <td><a href="https://home.treasury.gov/policy-issues/financial-sanctions/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists">Specially Designated Nationals And Blocked Persons List (SDN)</a></td>
+                                                <td>{{ last_update_us }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">2</th>
+                                                <td>United States</td>
+                                                <td><a href="https://www.trade.gov/consolidated-screening-list">Consolidated Screening List (CSL)</a></td>
+                                                <td>{{ last_update_us_cons }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">3</th>
+                                                <td>United Kingdom</td>
+                                                <td><a href="https://www.gov.uk/government/publications/the-uk-sanctions-list">The UK Sanctions List</a></td>
+                                                <td>{{ last_update_uk }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">4</th>
+                                                <td>United Kingdom</td>
+                                                <td><a href="https://www.gov.uk/government/publications/financial-sanctions-consolidated-list-of-targets/consolidated-list-of-targets">OFSI’s Consolidated List</a></td>
+                                                <td>{{ last_update_uk_cons }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">5</th>
+                                                <td>European Union</td>
+                                                <td><a href="https://ec.europa.eu/info/business-economy-euro/banking-and-finance/international-relations/restrictive-measures-sanctions/overview-sanctions-and-related-tools_en">Financial sanctions: Consolidated list</a></td>
+                                                <td>{{ last_update_eu }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">6</th>
+                                                <td>Ukraine</td>
+                                                <td><a href="https://sanctions-t.rnbo.gov.ua/">List of sanctioned persons and companies</a></td>
+                                                <td>{{ last_update_ua }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">7</th>
+                                                <td>Switzerland</td>
+                                                <td><a href="https://www.seco.admin.ch/seco/en/home/Aussenwirtschaftspolitik_Wirtschaftliche_Zusammenarbeit/Wirtschaftsbeziehungen/exportkontrollen-und-sanktionen/sanktionen-embargos.html">SECO Sanctions and Embargoes</a></td>
+                                                <td>{{ last_update_ch }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">8</th>
+                                                <td>Japan</td>
+                                                <td><a href="https://www.mof.go.jp/policy/international_policy/gaitame_kawase/gaitame/economic_sanctions/list.html">Economic sanctions and list of eligible people</a></td>
+                                                <td>{{ last_update_jp }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">9</th>
+                                                <td>Australia</td>
+                                                <td><a href="https://www.dfat.gov.au/international-relations/security/sanctions/consolidated-list">Australian Sanctions Office's Consolidated List</a></td>
+                                                <td>{{ last_update_au }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">10</th>
+                                                <td>Canada</td>
+                                                <td><a href="https://www.international.gc.ca/world-monde/international_relations-relations_internationales/sanctions/consolidated-consolide.aspx?lang=eng">Consolidated Canadian Autonomous Sanctions List</a></td>
+                                                <td>{{ last_update_ca }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- [ stiped-table ] end -->
+                </div>
+                <!-- [ Main Content ] end -->
+            </div>
+       </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

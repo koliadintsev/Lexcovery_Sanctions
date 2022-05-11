@@ -41,33 +41,10 @@
                                             {% csrf_token %}
                                             <div class="form-group">
                                                 <input type="text" id="searchRequestText" class="form-control" placeholder="Name of person or company" name="search">
-                                                <small id="searchHelp" class="form-text text-muted">NOTE: non-latin names are fine only if they are included to the sanction record. If not sure, try several latin transcriptions.<br>
-                                                    Example: Vladimir Putin is in the USA sanctions list but cannot be found with "Владимир Путин" request.</small>
                                             </div>
                                             <button type="submit" id="submitSearchButton" class="btn btn-primary">Search</button>
                                         </form>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Updates group -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Last updates</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <p>
-                                    US: {{ last_update_us }}<br>
-                                    UK (UK Sanctions List): {{ last_update_uk }}<br>
-                                    UK (Consolidated List): {{ last_update_uk_cons }}<br>
-                                    EU: {{ last_update_eu }}<br>
-                                    UA: {{ last_update_ua }}<br>
-                                    JP: {{ last_update_jp }}<br>
-                                    CH: {{ last_update_ch }}<br>
-                                    AU: {{ last_update_au }}<br>
-                                    CA: {{ last_update_ca }}<br>
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -77,14 +54,16 @@
                                 <h5>About</h5>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <p>
-                                    Full text search within the sanctions lists of the United States, United Kingdom and European Union. <br>
-                                    Under active development. <br>
-                                    <br>
-                                    Glory to Ukraine! <span class="flag-icon flag-icon-ua"></span>
-                                    </p>
-                                </div>
+                                <dl class="dl-horizontal row">
+                                    <dt class="col-sm-3">Description</dt>
+                                    <dd class="col-sm-9">Full text search within the sanctions lists of the most jurisdictions. Under active development.</dd>
+                                    <dt class="col-sm-3">Data Sources</dt>
+                                    <dd class="col-sm-9">System uses ONLY official sanctions lists WITHOUT any amendments. <a href="/sources">Data Sources list</a>.</dd>
+                                    <dt class="col-sm-3">Contacts</dt>
+                                    <dd class="col-sm-9"><a href="mailto: contact@lexcovery.com">contact@lexcovery.com</a></dd>
+                                    <dd class="col-sm-9"><br></dd>
+                                    <dd class="col-sm-9">Glory to Ukraine! <span class="flag-icon flag-icon-ua"></span></dd>
+                                </dl>
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,7 @@
 import datetime
 
+import xlrd
+
 from DataModel import sanction_web
 
 
@@ -32,7 +34,19 @@ class SanctionAU:
             control_date = self.control_date.strftime("%d/%m/%Y")
         else:
             control_date = self.control_date
-        program = self.listing_information + ';\n' + 'Committee: ' + self.committees + ';\n' + 'Start: ' + control_date
+
+        listing_information = ''
+        if self.listing_information:
+            if isinstance(self.listing_information, datetime.date):
+                listing_information = self.listing_information.strftime("%d/%m/%Y")
+            elif isinstance(self.listing_information, float):
+                try:
+                    listing_information = xlrd.xldate_as_datetime(self.listing_information, 0).date().strftime("%d/%m/%Y")
+                except Exception:
+                    listing_information = str(self.listing_information)
+            else:
+                listing_information = str(self.listing_information)
+        program = listing_information + ';\n' + 'Committee: ' + self.committees + ';\n' + 'Start: ' + control_date
         nationality = self.citizenship
         address = self.address
         date_of_birth = ''

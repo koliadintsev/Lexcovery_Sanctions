@@ -9,19 +9,7 @@ import nest_asyncio
 
 
 def main_view(request):
-    last_update_us = elasticsearch_handler.last_update_us
-    last_update_uk = elasticsearch_handler.last_update_uk
-    last_update_eu = elasticsearch_handler.last_update_eu
-    last_update_ua = elasticsearch_handler.last_update_ua
-    last_update_uk_cons = elasticsearch_handler.last_update_uk_cons
-    last_update_jp = elasticsearch_handler.last_update_jp
-    last_update_au = elasticsearch_handler.last_update_au
-    last_update_ca = elasticsearch_handler.last_update_ca
-
-    return render(request, 'main.html', {'last_update_us': last_update_us, 'last_update_uk': last_update_uk,
-                                         'last_update_eu': last_update_eu, 'last_update_ua': last_update_ua,
-                                         'last_update_uk_cons': last_update_uk_cons, 'last_update_jp': last_update_jp,
-                                         'last_update_au': last_update_au, 'last_update_ca': last_update_ca})
+    return render(request, 'main.html', {})
 
 
 async def search(request):
@@ -48,6 +36,24 @@ def donate(request):
 
 def support(request):
     return render(request, 'support.html', {})
+
+
+def sources(request):
+    last_update_us = elasticsearch_handler.last_update_us
+    last_update_us_cons = elasticsearch_handler.last_update_us_cons
+    last_update_uk = elasticsearch_handler.last_update_uk
+    last_update_eu = elasticsearch_handler.last_update_eu
+    last_update_ua = elasticsearch_handler.last_update_ua
+    last_update_uk_cons = elasticsearch_handler.last_update_uk_cons
+    last_update_jp = elasticsearch_handler.last_update_jp
+    last_update_au = elasticsearch_handler.last_update_au
+    last_update_ca = elasticsearch_handler.last_update_ca
+
+    return render(request, 'sources.html', {'last_update_us': last_update_us, 'last_update_uk': last_update_uk,
+                                         'last_update_eu': last_update_eu, 'last_update_ua': last_update_ua,
+                                         'last_update_uk_cons': last_update_uk_cons, 'last_update_jp': last_update_jp,
+                                         'last_update_au': last_update_au, 'last_update_ca': last_update_ca,
+                                         'last_update_us_cons': last_update_us_cons})
 
 
 async def upload(request):
