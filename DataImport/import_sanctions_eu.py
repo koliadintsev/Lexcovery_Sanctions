@@ -49,6 +49,7 @@ async def import_data_from_web(session):
             text = element.get('generationDate')
             date = parse(text).date()
             last_update = date.strftime("%d/%m/%Y")
+            break
 
     # print('import finished')
 
@@ -78,6 +79,7 @@ async def import_data_from_xml():
         text = element.get('generationDate')
         date = parse(text).date()
         last_update = date.strftime("%d/%m/%Y")
+        break
     """
     tree = ET.fromstring(file.read().strip())
     executor = concurrent.futures.ThreadPoolExecutor(100)
