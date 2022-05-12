@@ -164,7 +164,8 @@ def import_target_from_element(element):
                     for child in doc.getchildren():
                         if child.tag == 'remark':
                             remark = child.text
-                    rel = SanctionCHRelation(ssid=rel_ssid, target_id=target_id, relation_type=relation_type, remark=remark, target = None)
+                    rel = SanctionCHRelation(ssid=rel_ssid, target_id=target_id, relation_type=relation_type,
+                                             remark=remark, target=None)
                     relation.append(rel)
                 elif doc.tag == 'other-information':
                     other_information.append(doc.text)
@@ -304,7 +305,7 @@ def import_identity_from_element(element):
                 elif child.tag == 'zip-code':
                     zip_code = child.text
             addr = SanctionCHAddress(ssid=address_ssid, place_id=place_id, quality=address_quality, current=current, c_o=c_o, address_details=address_details, p_o_box=p_o_box,
-                 zip_code=zip_code, remark=remark, place = None)
+                 zip_code=zip_code, remark=remark, place=None)
             address.append(addr)
 
     identity = SanctionCHIdentity(ssid=ssid, main=main, name=name, nationality=nationality, day_month_year=day_month_year, place_of_birth=place_of_birth,
@@ -320,7 +321,8 @@ def reveal_id_in_sanction(sanction: SanctionCH):
     for rel in sanction.relation:
         for s in sanctions:
             if rel.target_id == s.ssid:
-                rel.target = s
+                # rel.target = s
+                rel.target_name = s.search_fields[0]
     for program in programs:
         if program.sanction_set_ssid == sanction.sanctions_set_id:
             sanction.sanction_set = program
@@ -353,15 +355,15 @@ def import_data_from_json(element):
     search_fields = []
 
     sanction_set = SanctionCHProgram()
-    set = element.sanctions_set
-    sanction_set.ssid = set['ssid']
-    sanction_set.origin = set['origin']
-    sanction_set.sanction_set_ssid = set['sanction_set_ssid']
-    sanction_set.sanctions_set = set['sanctions_set']
-    sanction_set.program_name = set['program_name']
-    sanction_set.program_key = set['program_key']
-    sanction_set.predecessor_version_date = set['predecessor_version_date']
-    sanction_set.version_date = set['version_date']
+    s_set = element.sanction_set
+    sanction_set.ssid = s_set['ssid']
+    sanction_set.origin = s_set['origin']
+    sanction_set.sanction_set_ssid = s_set['sanction_set_ssid']
+    sanction_set.sanctions_set = s_set['sanctions_set']
+    sanction_set.program_name = s_set['program_name']
+    sanction_set.program_key = s_set['program_key']
+    sanction_set.predecessor_version_date = s_set['predecessor_version_date']
+    sanction_set.version_date = s_set['version_date']
 
     for item in element.other_information:
         other_information.append(item)
@@ -370,49 +372,129 @@ def import_data_from_json(element):
 
     for item in element.relation:
         rel = SanctionCHRelation()
-        rel.target = SanctionCH()
-        target = item['target']
-        for name in target['search_fields']:
-            rel.target.search_fields.append(name)
         rel.remark = item['remark']
         rel.relation_type = item['relation_type']
         rel.target_id = item['target_id']
+        rel.target_name = item['target_name']
         rel.ssid = item['ssid']
         relation.append(rel)
 
     for item in element.identity:
-        iden = SanctionCHIdentity()
-        for addr in item['address']:
-            a = SanctionCHAddress()
-            a.place = SanctionCHPlace()
-            place = addr['place']
-            a.place.ssid = place['ssid']
-            a.place.area = place['ssid']
-            a.place.location = place['ssid']
-            a.place.country = place['ssid']
-
-            a.remark = addr['remark']
-            a.zip_code = addr['zip_code']
-            a.p_o_box = addr['p_o_box']
-            a.address_details = addr['address_details']
-            a.c_o = addr['c_o']
-            a.current = addr['current']
-            a.quality = addr['quality']
-            a.place_id = addr['place_id']
-            a.ssid = addr['ssid']
-            iden.address.append(a)
-        for nation in item['nationality']:
-            iden.nationality.append(nation)
-        iden.main = item['main']
+        iden = parse_identity_from_json(item)
         identity.append(iden)
 
-    for name in element.search_fields:
-        search_fields.append(name)
+    # for name in element.search_fields:
+        # search_fields.append(name)
 
     sanction = SanctionCH(ssid=ssid, sanctions_set_id=sanctions_set_id, foreign_identifier=foreign_identifier,
                  generic_attribute=generic_attribute, modification=modification, sex=sex, object_type=object_type, identity=identity, justification=justification,
                  relation=relation, other_information=other_information, sanction_set=sanction_set)
-    sanction.search_fields = search_fields
+    # sanction.search_fields = search_fields
 
     return sanction
+
+
+def parse_identity_from_json(element):
+    identification_document = []
+    address = []
+    place_of_birth = []
+    day_month_year = []
+    nationality = []
+    name = []
+    main = element['main']
+    ssid = element['ssid']
+
+    for addr in element['address']:
+        a = SanctionCHAddress()
+        a.place = SanctionCHPlace()
+        place = addr['place']
+        if place is not None:
+            a.place.ssid = place['ssid']
+            a.place.area = place['area']
+            a.place.location = place['location']
+            a.place.country = place['country']
+
+        a.remark = addr['remark']
+        a.zip_code = addr['zip_code']
+        a.p_o_box = addr['p_o_box']
+        a.address_details = addr['address_details']
+        a.c_o = addr['c_o']
+        a.current = addr['current']
+        a.quality = addr['quality']
+        a.place_id = addr['place_id']
+        a.ssid = addr['ssid']
+        address.append(a)
+    for nation in element['nationality']:
+        nationality.append(nation)
+    for item in element['name']:
+        lang = item['lang']
+        name_quality = item['quality']
+        name_type = item['name_type']
+        name_ssid = item['ssid']
+        name_part = []
+        for child in item['name_part']:
+            spelling_variant = []
+            name_part_type = child['name_part_type']
+            order = child['order']
+            value = child['value']
+            for c in child['spelling_variant']:
+                spelling_variant.append(c)
+            part = SanctionCHNamePart(value=value, spelling_variant=spelling_variant, order=order,
+                                      name_part_type=name_part_type)
+            name_part.append(part)
+        n = SanctionCHName(ssid=name_ssid, name_type=name_type, quality=name_quality, lang=lang, name_part=name_part)
+        name.append(n)
+    for item in element['identification_document']:
+        remark = item['remark']
+        expiry_date = item['expiry_date']
+        place_id = item['place_id']
+        date_of_issue = item['date_of_issue']
+        issuer = item['issuer']
+        number = item['number']
+        document_type = item['document_type']
+        document_ssid = item['ssid']
+
+        place_of_issue = SanctionCHPlace()
+        place = item['place_of_issue']
+        if place is not None:
+            place_of_issue.ssid = place['ssid']
+            place_of_issue.area = place['area']
+            place_of_issue.location = place['location']
+            place_of_issue.country = place['country']
+
+        document = SanctionCHDocument(ssid=document_ssid, document_type=document_type, number=number, issuer=issuer,
+                                      date_of_issue=date_of_issue, place_of_issue=place_of_issue, place_id=place_id,
+                                      expiry_date=expiry_date, remark=remark)
+        identification_document.append(document)
+    for item in element['day_month_year']:
+        date_quality = item['quality']
+        calendar = item['calendar']
+        year = item['year']
+        month = item['month']
+        day = item['day']
+        date_ssid = item['ssid']
+        ch_date = SanctionCHDate(ssid=date_ssid, day=day, month=month, year=year, calendar=calendar,
+                                 quality=date_quality)
+        day_month_year.append(ch_date)
+    for item in element['place_of_birth']:
+        place_id = item['place_id']
+        place_quality = item['quality']
+        place_ssid = item['ssid']
+
+        place_of_b = SanctionCHPlace()
+        place = item['place']
+        if place is not None:
+            place_of_b.ssid = place['ssid']
+            place_of_b.area = place['area']
+            place_of_b.location = place['location']
+            place_of_b.country = place['country']
+
+        place = SanctionCHPlaceOfBirth(ssid=place_ssid, place_id=place_id, quality=place_quality, place=place_of_b)
+        place_of_birth.append(place)
+
+    return SanctionCHIdentity(ssid=ssid, main=main, name=name, nationality=nationality, day_month_year=day_month_year,
+                              place_of_birth=place_of_birth, address=address, identification_document=identification_document)
+
+
+
 

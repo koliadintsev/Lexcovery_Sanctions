@@ -105,9 +105,9 @@ class SanctionCH:
                     address = address + '\n'
 
         personal_details = ''
-        if self.sex is not None:
+        if self.sex:
             personal_details = 'Gender: ' + self.sex + '\n'
-        if self.object_type is not None:
+        if self.object_type:
             personal_details = 'Type: ' + self.object_type + '\n'
 
         additional_info = ''
@@ -117,7 +117,7 @@ class SanctionCH:
             else:
                 additional_info = text
         for rel in self.relation:
-            text = rel.relation_type + ' ' + rel.target.search_fields[0]
+            text = rel.relation_type + ' ' + rel.target_name
             if rel.remark:
                 text = text + '; ' + rel.remark
             if additional_info:

@@ -20,12 +20,13 @@ doc_id = 0
 
 
 async def find_link_xls(session):
+
     # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    # response = requests.get(url=SANCTIONS_WEBSITE+'list.html')
-    response = await session.request(method='GET', url=SANCTIONS_WEBSITE + 'list.html')
+    response = requests.get(url=SANCTIONS_WEBSITE+'list.html')
+    #response = await session.request(method='GET', url=SANCTIONS_WEBSITE + 'list.html')
     xls_url_web = XLS_URL
     if response.ok:
-        doc = await response.text()
+        doc = response.text
         text = BeautifulSoup(doc, 'html.parser')
         for link in text.find_all('a'):
             url = link.get('href')
@@ -38,11 +39,12 @@ async def find_link_xls(session):
 
 async def get_list_xls(session):
     link = await find_link_xls(session)
-    response = await session.request(method='GET', url=link)
+    #response = await session.request(method='GET', url=link)
+    response = requests.get(url=link)
     if response.ok:
-        doc = await response.read()
+        doc = response.content
         d = copy.deepcopy(doc)
-        return d
+        return d, link
     else:
         return
 
@@ -51,10 +53,10 @@ async def import_data_from_web(session):
     global sanctions
 
     # Define variable to load the workbook
-    xls_file = await get_list_xls(session)
-    workbook = xlrd.open_workbook(BytesIO(xls_file))
+    xls_file, link = await get_list_xls(session)
+    workbook = xlrd.open_workbook(file_contents=xls_file)
 
-    today = xls_file.replace('.xls', '').replace(SANCTIONS_WEBSITE + 'shisantouketsu', '')
+    today = link.replace('.xls', '').replace(SANCTIONS_WEBSITE + 'shisantouketsu', '')
     last_update = today[6:len(today)] + today[4:6] + today[0:4]
 
     # Define variable to read the active sheet:

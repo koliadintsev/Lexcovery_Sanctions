@@ -4,6 +4,7 @@
 import os
 
 from elasticsearch import Elasticsearch, exceptions, helpers
+from elasticsearch import AsyncElasticsearch
 import elasticsearch_dsl
 import concurrent.futures
 import uuid
@@ -13,7 +14,7 @@ import jsons
 from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp, import_sanctions_au, \
     import_sanctions_usa_consolidated
 from DataImport import import_sanctions_usa, import_sanctions_ua, import_sanctions_uk_consolidated
-from DataImport import import_sanctions_ca
+from DataImport import import_sanctions_ca, import_sanctions_ch
 import copy
 from Lexcovery_Sanctions import settings
 import aiohttp
@@ -45,6 +46,7 @@ sanctions_UA = []
 sanctions_JP = []
 sanctions_AU = []
 sanctions_CA = []
+sanctions_CH = []
 
 bulk_USA = []
 bulk_USA_Cons = []
@@ -55,6 +57,7 @@ bulk_UA = []
 bulk_JP = []
 bulk_AU = []
 bulk_CA = []
+bulk_CH = []
 
 last_update_us = ''
 last_update_us_cons = ''
@@ -65,11 +68,12 @@ last_update_ua = ''
 last_update_jp = ''
 last_update_au = ''
 last_update_ca = ''
+last_update_ch = ''
 
 DONE_IMPORT = {}
 DONE_JSON = {}
 
-LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA", "JP", "AU", "CA"]
+LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA", "JP", "AU", "CA", "CH"]
 
 DEBUG = False
 
@@ -104,6 +108,7 @@ async def create_index():
     global sanctions_JP
     global sanctions_AU
     global sanctions_CA
+    global sanctions_CH
 
     client = initialize_client()
 
@@ -118,6 +123,7 @@ async def create_index():
     global bulk_JP
     global bulk_AU
     global bulk_CA
+    global bulk_CH
 
     # Создаем индекс
     client.indices.create(index="sanctions_usa")
@@ -129,6 +135,7 @@ async def create_index():
     client.indices.create(index="sanctions_jp")
     client.indices.create(index="sanctions_au")
     client.indices.create(index="sanctions_ca")
+    client.indices.create(index="sanctions_ch")
 
     # Вносим имена в индекс
 
@@ -149,7 +156,9 @@ async def create_index():
     helpers.bulk(client, bulk_JP, chunk_size=1000, request_timeout=200, index='sanctions_jp')
     helpers.bulk(client, bulk_AU, chunk_size=1000, request_timeout=200, index='sanctions_au')
     helpers.bulk(client, bulk_CA, chunk_size=1000, request_timeout=200, index='sanctions_ca')
-    #print('Indexes created')
+    helpers.bulk(client, bulk_CH, chunk_size=1000, request_timeout=200, index='sanctions_ch')
+    client.close()
+    print('Indexes created')
 
 
 async def sanction_to_json_list(list_name):
@@ -175,6 +184,8 @@ async def sanction_to_json_list(list_name):
             await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_AU])
         elif list_name == "CA":
             await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_CA])
+        elif list_name == "CH":
+            await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_CH])
 
 
 async def sanction_to_json(sanction, list_name):
@@ -185,6 +196,7 @@ async def sanction_to_json(sanction, list_name):
     global bulk_JP
     global bulk_AU
     global bulk_CA
+    global bulk_CH
 
     if list_name == "US":
         dict = jsons.dump(sanction)
@@ -213,6 +225,9 @@ async def sanction_to_json(sanction, list_name):
     elif list_name == "CA":
         dict = jsons.dump(sanction)
         bulk_CA.append(copy.deepcopy(dict))
+    elif list_name == "CH":
+        dict = jsons.dump(sanction)
+        bulk_CH.append(copy.deepcopy(dict))
 
 
 def delete_index():
@@ -253,12 +268,17 @@ def delete_index():
         client.indices.delete(index="sanctions_ca")
     except exceptions.TransportError:
         pass
+    try:
+        client.indices.delete(index="sanctions_ch")
+    except exceptions.TransportError:
+        pass
     client.close()
 
 
 async def search_fuzzy_request(request):
 
     client = initialize_client()
+
     search_result = []
     result = []
 
@@ -269,6 +289,8 @@ async def search_fuzzy_request(request):
     for hit in s:
         res = {"index": hit.meta.index, "hit": hit}
         search_result.append(res)
+
+    client.close()
 
     us_hits = []
     us_cons_hits = []
@@ -349,6 +371,10 @@ async def search_fuzzy_request(request):
         elif doc["index"] == "sanctions_ca":
             sanction = import_sanctions_ca.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
+        elif doc["index"] == "sanctions_ch":
+            sanction = import_sanctions_ch.import_data_from_json(hit)
+            result.append(copy.deepcopy(sanction.webify()))
+
     return result
 
 
@@ -364,10 +390,8 @@ async def import_sanctions_lists():
             #await import_one_list(name, session)
 
     global DONE_IMPORT
-
     for list_name in LIST_SANCTIONS:
         DONE_IMPORT.update({list_name: False})
-
     async with ClientSession() as session:
         await asyncio.gather(*[import_one_list(name, session) for name in LIST_SANCTIONS])
 
@@ -382,6 +406,7 @@ async def import_one_list(list_name, session):
     global sanctions_UK_Cons
     global sanctions_AU
     global sanctions_CA
+    global sanctions_CH
 
     global last_update_us
     global last_update_us_cons
@@ -392,6 +417,7 @@ async def import_one_list(list_name, session):
     global last_update_uk_cons
     global last_update_au
     global last_update_ca
+    global last_update_ch
 
     global DONE_IMPORT
 
@@ -400,45 +426,60 @@ async def import_one_list(list_name, session):
         if list_name == "US":
             try:
                 sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_USA, last_update_us = await import_sanctions_usa.import_data_from_xml()
+                print(list_name + ' loaded from local file')
         elif list_name == "US_Cons":
             try:
                 sanctions_USA_Cons, last_update_us_cons = await import_sanctions_usa_consolidated.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_USA_Cons, last_update_us_cons = await import_sanctions_usa_consolidated.import_data_from_tsv()
+                print(list_name + ' loaded from local file')
         elif list_name == "UK":
             try:
                 sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_UK, last_update_uk = await import_sanctions_uk.import_data_from_xml()
+                print(list_name + ' loaded from local file')
         elif list_name == "UK_Cons":
             try:
                 sanctions_UK_Cons, last_update_uk_cons = await import_sanctions_uk_consolidated.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_UK_Cons, last_update_uk_cons = await import_sanctions_uk_consolidated.import_data_from_xls()
+                print(list_name + ' loaded from local file')
         elif list_name == "EU":
             try:
                 sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_EU, last_update_eu = await import_sanctions_eu.import_data_from_xml()
+                print(list_name + ' loaded from local file')
         elif list_name == "UA":
             try:
                 sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_xls()
+                print(list_name + ' loaded from local file')
         elif list_name == "JP":
             try:
                 sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_JP, last_update_jp = await import_sanctions_jp.import_data_from_xls()
+                print(list_name + ' loaded from local file')
         elif list_name == "AU":
             try:
                 sanctions_AU, last_update_au = await import_sanctions_au.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_AU, last_update_au = await import_sanctions_au.import_data_from_xls()
+                print(list_name + ' loaded from local file')
         elif list_name == "CA":
             try:
                 sanctions_CA, last_update_ca = await import_sanctions_ca.import_data_from_web(session)
-            except Exception:
+            except Exception as e:
                 sanctions_CA, last_update_ca = await import_sanctions_ca.import_data_from_xml()
+                print(list_name + ' loaded from local file')
+        elif list_name == "CH":
+            try:
+                sanctions_CH, last_update_ch = await import_sanctions_ch.import_data_from_web(session)
+            except Exception as e:
+                sanctions_CH, last_update_ch = await import_sanctions_ch.import_data_from_xml()
+                print(list_name + ' loaded from local file')

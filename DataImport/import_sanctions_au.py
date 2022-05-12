@@ -36,7 +36,7 @@ async def import_data_from_web(session):
 
     # Define variable to load the workbook
     xls_file = await get_list_xls(session)
-    workbook = xlrd.open_workbook(BytesIO(xls_file))
+    workbook = xlrd.open_workbook(file_contents=xls_file)
     sheet = workbook.sheet_by_index(0)
 
     # Define variable to read the active sheet:

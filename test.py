@@ -1,10 +1,14 @@
-from Search import elasticsearch_handler
+import os
+
+import aiohttp
+
+from Search import elasticsearch_handler, bulk_sanctions_search
 from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp, import_sanctions_ca, \
     import_sanctions_usa_consolidated, import_sanctions_ch
 import asyncio
 
 
-def main():
+async def main():
     # print(translit.is_latin('hui'))
     # print(translit.is_latin('хуй'))
     # print(translit.is_latin('حاجی خيرالله و حاجی ستار صرافی'))
@@ -22,12 +26,22 @@ def main():
     # r = import_sanctions_jp.find_link_xls(None)
     # r1, d1 = import_sanctions_jp.import_data_from_xls()
 
+
     # r1, d1 = import_sanctions_ca.import_data_from_xml()
 
     # r1, d1 = import_sanctions_usa_consolidated.import_data_from_tsv()
 
-    r1, d1 = import_sanctions_ch.import_data_from_xml()
-    print('a')
-    return r1, d1
+    # r1, d1 = import_sanctions_ch.import_data_from_xml()
+    # os.environ['AIOHTTP_NO_EXTENSIONS'] = '1'
+    #print(os.environ.get('AIOHTTP_NO_EXTENSIONS'))
+    #await elasticsearch_handler.create_index()
+    r = await bulk_sanctions_search.search_entities()
 
-main()
+    #async with aiohttp.ClientSession() as session:
+        #r1, d1 = await import_sanctions_jp.import_data_from_web(session)
+
+    print('done')
+    return r
+
+
+asyncio.run(main())

@@ -22,7 +22,7 @@ async def get_list_tsv(session):
     #response = requests.get(XML_URL)
     response = await session.request(method='GET', url=TSV_URL)
     if response.ok:
-        doc = await response.read()
+        doc = await response.text()
         d = copy.deepcopy(doc)
         return d
     else:
@@ -37,7 +37,7 @@ async def import_data_from_web(session):
     last_update = today.strftime("%d/%m/%Y")
 
     tsv_file = await get_list_tsv(session)
-    file = reader(tsv_file, delimiter="\t")
+    file = reader(tsv_file.splitlines(), delimiter="\t")
     # skip first line with headers
     next(file)
 
