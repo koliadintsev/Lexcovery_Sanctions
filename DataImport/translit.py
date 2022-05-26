@@ -126,12 +126,31 @@ def to_cyrillic(string_to_transliterate, lang_code='ru'):
                             (c in u'Zz' and c_plus_1 in u'Hh')  # z, zh
                     )) or \
                     (lang_code == 'ua' and (
-                            (c in u'Jj' and c_plus_1 in u'eau') or  # je, ja, ju
-                            (c in u'Šš' and c_plus_1 in u'č')  # šč
+                            (c in u'Yy' and c_plus_1 in u'EAUIeaui') or  # je, ja, ju
+                            (c in u'Ii' and c_plus_1 in u'EAUeau') or  # šč
+                            (c in u'Zz' and c_plus_1 in u'Hh') or  # šč
+                            (c in u'Ss' and c_plus_1 in u'Hh') or  # šč
+                            (c in u'Cc' and c_plus_1 in u'Hh') or  # šč
+                            (c in u'Tt' and c_plus_1 in u'Ss') or  # šč
+                            (c in u'Kk' and c_plus_1 in u'Hh') # šč
                     )):
 
                 index += 1
                 c += c_plus_1
+
+                # In Bulgarian, the letter "щ" is represented by three latin letters: "sht",
+                # so we need this logic to support the third latin letter
+                if (lang_code == 'ua' and (c == 'zh' or c == 'Zg' or c == 'ZG') and string_to_transliterate[
+                    index + 1] in u'Hh'):
+                    index += 1
+                    c += string_to_transliterate[index]
+
+                # In Bulgarian, the letter "щ" is represented by three latin letters: "sht",
+                # so we need this logic to support the third latin letter
+                if (lang_code == 'ua' and (c == 'Shc' or c == 'shc' or c == 'SHC') and string_to_transliterate[
+                    index + 1] in u'Hh'):
+                    index += 1
+                    c += string_to_transliterate[index]
 
                 # In Bulgarian, the letter "щ" is represented by three latin letters: "sht",
                 # so we need this logic to support the third latin letter
@@ -143,7 +162,7 @@ def to_cyrillic(string_to_transliterate, lang_code='ru'):
             # If character is in dictionary, it means it's a cyrillic so let's transliterate that character.
             if c in transliteration_dict:
                 # ay, ey, iy, oy, uy
-                if lang_code == 'ru' and c in u'Yy' and \
+                if (lang_code == 'ru' or lang_code == 'ua') and c in u'Yy' and \
                         cyrillic_str and cyrillic_str[-1].lower() in u"аеиоуэя":
                     cyrillic_str += u"й" if c == u'y' else u"Й"
                 else:

@@ -249,7 +249,7 @@ UA_CYR_TO_LAT_DICT = {
     u"Ц": u"Ts", u"ц": u"ts",
     u"Ч": u"Ch", u"ч": u"ch",
     u"Ш": u"Sh", u"ш": u"sh",
-    u"Щ": u"Shch", u"щ": u"shch",
+    u"Щ": u"Shch", u"щ": u"Shch",
     u"Ь": u"'", u"ь": u"'",
     u"Ю": u"Yu", u"ю": u"iu",
     u"Я": u"YA", u"я": u"ia",
@@ -257,6 +257,32 @@ UA_CYR_TO_LAT_DICT = {
 
 # Latin to Cyrillic
 UA_LAT_TO_CYR_DICT = {y: x for x, y in iter(UA_CYR_TO_LAT_DICT.items())}
+UA_LAT_TO_CYR_DICT.update({
+    u"JE": u"ЖЕ", u"Je": u"Же", u"je": u"же",
+    u"YU": u"Ю", u"Yu": u"Ю", u"yu": u"ю",
+    u"YI": u"Ї", u"Yi": u"Ї", u"yi": u"ї",
+    u"IU": u"Ю", u"Iu": u"Ю", u"iu": u"ю",
+    u"YA": u"Я", u"Ya": u"Я", u"ya": u"я",
+    u"IA": u"Я", u"Ia": u"Я", u"ia": u"я",
+    u"YE": u"Є", u"Ye": u"Є", u"ye": u"є",
+    u"CH": u"Ч", u"Ch": u"Ч", u"ch": u"ч",
+    u"ZGH": u"Зг", u"Zgh": u"Зг", u"zgh": u"зг",
+    u"KH": u"Х", u"Kh": u"Х", u"kh": u"х",
+    u"TS": u"Ц", u"Ts": u"Ц", u"ts": u"ц",
+    u"SH": u"Ш", u"Sh": u"Ш", u"sh": u"Ш",
+    u"G": u"Г", u"g": u"г",
+    u"C": u"К", u"c": u"к",
+    u"H": u"Х", u"h": u"х",
+    u"J": u"Ж", u"j": u"ж",
+    u"Y": u"И", u"y": u"и",
+    u"X": u"Х", u"x": u"х",
+    u"Q": u"К", u"q": u"к",
+    u"W": u"В", u"w": u"в",
+    u"SHCH": u"Щ", u"Shch": u"Щ", u"shch": u"щ",
+    u"'": u"ь",
+    u"#": u"ъ",
+    u"iy": u"ий",  # dobriy => добрый
+})
 
 # Bundle up all the dictionaries in a lookup dictionary
 TRANSLIT_DICT = {

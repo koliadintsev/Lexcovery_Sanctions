@@ -12,7 +12,7 @@ from elasticsearch_dsl import connections, Index, Search, analyzer, Q
 import re
 import jsons
 from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp, import_sanctions_au, \
-    import_sanctions_usa_consolidated
+    import_sanctions_usa_consolidated, import_companies_ua
 from DataImport import import_sanctions_usa, import_sanctions_ua, import_sanctions_uk_consolidated
 from DataImport import import_sanctions_ca, import_sanctions_ch
 import copy
@@ -298,6 +298,8 @@ async def search_fuzzy_request(request):
     uk_hits = []
     uk_cons_hits = []
 
+    ch_hits = []
+
     for doc in search_result:
         hit = doc["hit"]
         if doc["index"] == "sanctions_usa":
@@ -483,3 +485,50 @@ async def import_one_list(list_name, session):
             except Exception as e:
                 sanctions_CH, last_update_ch = await import_sanctions_ch.import_data_from_xml()
                 print(list_name + ' loaded from local file')
+
+
+async def import_ua_companies():
+
+    companies = await import_companies_ua.import_data_from_xml()
+
+    client = initialize_client()
+    try:
+        client.indices.delete(index="companies_ua")
+    except exceptions.TransportError:
+        pass
+    try:
+        client.indices.create(index="companies_ua")
+    except exceptions.TransportError:
+        pass
+
+    bulk = []
+    for company in companies:
+        dict = jsons.dump(company)
+        bulk.append(copy.deepcopy(dict))
+    helpers.bulk(client, bulk, chunk_size=1000, request_timeout=200, index='companies_ua')
+    client.close()
+
+
+def find_ua_company(request):
+    client = initialize_client()
+
+    result = []
+
+    query = Q("multi_match", query=request, type='best_fields', fields=['name'], operator='and', fuzziness='AUTO', tie_breaker=0.7)
+
+    s = Search(index='companies_ua').using(client).query(query)
+    s.execute()
+    client.close()
+
+    for doc in s:
+        company = import_companies_ua.import_data_from_json(doc)
+        result.append(copy.deepcopy(company))
+
+    return result
+
+
+
+
+
+
+

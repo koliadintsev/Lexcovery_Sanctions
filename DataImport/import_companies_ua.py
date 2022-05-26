@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
+
 from lxml import etree
 import copy
 from DataModel.UA.company_ua import CompanyUa
-from Lexcovery_Sanctions.settings import STATIC_ROOT
+from Lexcovery_Sanctions import settings
+import asyncio
 
-FILENAME = STATIC_ROOT + "/edr_full.xml"
-RUSSIAN_COMPANIES = STATIC_ROOT + "/russian_edr_full.xml"
+FILENAME = os.path.join(settings.BASE_DIR,  'static') + "/Companies/edr_full.xml"
+RUSSIAN_COMPANIES = os.path.join(settings.BASE_DIR,  'static') + "/Companies/russian_edr_full.xml"
 companies = []
 russianCompanies = etree
 
@@ -26,19 +29,23 @@ def find_russian_data_from_xml():
     print('import finished')
 
     xml_data = etree.tounicode(root)  # binary string
-    with open(STATIC_ROOT + "/russian_edr_full.xml", 'w') as f:  # Write in XML file as utf-8
+    with open(RUSSIAN_COMPANIES, 'w') as f:  # Write in XML file as utf-8
         f.write(xml_data)
 
     print('russians found and recorded')
 
 
-def import_data_from_xml():
+async def import_data_from_xml():
     global companies
     #parser = etree.XMLParser(recover=True, huge_tree=True)
 
-    for event, element in etree.iterparse(RUSSIAN_COMPANIES, tag="SUBJECT"):
+    #tree = etree.parse(FILENAME, parser)
+    #file = tree.getroot()
+    await asyncio.gather(*[import_data_from_element(element) for event, element in etree.iterparse(FILENAME, tag="RECORD", recover=True, huge_tree=True)])
+
+    '''for event, element in :
         import_data_from_element(element)
-        element.clear()
+        element.clear()'''
 
     """
     tree = ET.fromstring(file.read().strip())
@@ -78,7 +85,7 @@ def find_russian_company(doc, root):
         root.append(child)
 
 
-def import_data_from_element(doc):
+async def import_data_from_element(doc):
     global companies
     name = ''
     shortname = ''
@@ -89,7 +96,6 @@ def import_data_from_element(doc):
     stan = ''
     beneficiaries = []
     founders = []
-    company = CompanyUa(name, shortname, code, address, kved, boss, stan)
 
     for item in doc.getchildren():
         if item.tag == 'NAME':
@@ -124,6 +130,29 @@ def import_data_from_element(doc):
     company.founders = founders
 
     companies.append(company)
-    print(str(code) + ' added successfully')
+    # print(str(code) + ' added successfully')
 
 
+def import_data_from_json(element):
+
+    name = element.name
+    shortname = element.shortname
+    code = element.code
+    address = element.address
+    kved = element.kved
+    boss = element.boss
+    stan = element.stan
+    beneficiaries = []
+    founders = []
+
+    for founder in element.founders:
+        founders.append(founder)
+
+    for beneficiary in element.beneficiaries:
+        beneficiaries.append(beneficiary)
+
+    company = CompanyUa(name, shortname, code, address, kved, boss, stan)
+    company.beneficiaries = beneficiaries
+    company.founders = founders
+
+    return company
