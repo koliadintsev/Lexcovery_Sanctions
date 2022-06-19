@@ -15,6 +15,7 @@ from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanction
     import_sanctions_usa_consolidated, import_companies_ua
 from DataImport import import_sanctions_usa, import_sanctions_ua, import_sanctions_uk_consolidated
 from DataImport import import_sanctions_ca, import_sanctions_ch
+from Search import opencorporates_handler
 import copy
 from Lexcovery_Sanctions import settings
 import aiohttp
@@ -275,14 +276,14 @@ def delete_index():
     client.close()
 
 
-async def search_fuzzy_request(request):
+async def search_fuzzy_request(request, fuzziness="AUTO"):
 
     client = initialize_client()
 
     search_result = []
     result = []
 
-    query = Q("multi_match", query=request, type='best_fields', fields=["search_fields"], operator='and', fuzziness='AUTO', tie_breaker=0.7)
+    query = Q("multi_match", query=request, type='best_fields', fields=["search_fields"], operator='and', fuzziness=fuzziness, tie_breaker=0.7)
 
     s = Search().using(client).query(query)
     s.execute()

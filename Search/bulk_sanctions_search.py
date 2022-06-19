@@ -1,6 +1,7 @@
 import copy
 import datetime
 import os
+import re
 
 import openpyxl
 from openpyxl.styles import Font
@@ -56,7 +57,32 @@ async def fuzzy_search(request):
     doc_id = request['id']
     entity = request['request']
 
-    result = await elasticsearch_handler.search_fuzzy_request(entity)
+    result_auto = await elasticsearch_handler.search_fuzzy_request(entity, "AUTO")
+    result_one = await elasticsearch_handler.search_fuzzy_request(entity, 2)
+
+    result = result_auto
+    for hit in result_one:
+        found = False
+        for old_hit in result_auto:
+            if old_hit.main_name == hit.main_name and old_hit.sanctioned_by == hit.sanctioned_by:
+                found = True
+        if not found:
+            result.append(hit)
+
+    request_parts = entity.split()
+    if len(request_parts) <=3:
+        for s in request_parts:
+            capital = re.sub('[^A-Z]', '', s)
+            if len(capital) > 4:
+                cap_result = await elasticsearch_handler.search_fuzzy_request(capital, 2)
+                for hit in cap_result:
+                    found = False
+                    for old_hit in result:
+                        if old_hit.main_name == hit.main_name and old_hit.sanctioned_by == hit.sanctioned_by:
+                            found = True
+                    if not found:
+                        result.append(hit)
+
     if len(result) == 0:
         return
     else:

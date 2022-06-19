@@ -54,6 +54,23 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                     <!-- [ tabs ] start -->
+                                        {% if count == 0 %}
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h5>Your request was not found in sanctions lists</h5>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        {% if nominal == True %}
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h5 style="color: red"><b>WARNING! </b></h5><h5>This person or entity can be a nominal shareholder</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p>This person is an officer in a {{ officer_count }} companies in different jurisdictions.</p>
+                                                </div>
+                                            </div>
+                                        {% endif %}
                                         {% for sanction in sanctions %}
                                             <div class="card">
                                                 <div class="card-header">

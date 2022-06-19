@@ -1,6 +1,6 @@
 # Create your views here.
 from django.shortcuts import render
-from Search import elasticsearch_handler
+from Search import elasticsearch_handler, opencorporates_handler
 import re
 import datetime
 import aiohttp
@@ -14,7 +14,16 @@ def main_view(request):
 
 async def search(request):
     search_string = request.POST["search"]
+    nominal = False
+
     sanctions = await elasticsearch_handler.search_fuzzy_request(search_string)
+    try:
+        officer_count = await opencorporates_handler.find_officer_count_by_name(request)
+    except Exception:
+        officer_count = 0
+
+    if officer_count > 5:
+        nominal = True
 
     i = 0
     for sanction in sanctions:
@@ -27,7 +36,8 @@ async def search(request):
         sanction.id = i
         i = i+1
 
-    return render(request, 'search.html', {'search_string': search_string, 'sanctions': sanctions})
+    return render(request, 'search.html', {'search_string': search_string, 'sanctions': sanctions,
+                                           'count': len(sanctions), 'nominal': nominal, 'officer_count': officer_count})
 
 
 def donate(request):

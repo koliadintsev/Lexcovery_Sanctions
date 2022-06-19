@@ -12,6 +12,9 @@
 # below:
 .git
 .gitignore
+venv/
+static/Sanctions/Search/
+
 
 # Python pycache:
 __pycache__/

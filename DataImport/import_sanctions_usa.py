@@ -328,7 +328,7 @@ def import_data_from_json(element):
 
     for item in element.idList:
         passport = sanction_USA_document.SanctionUSADocument()
-        passport.uid = int(item['uid'])
+        passport.uid = item['uid']
         passport.idType = item['idType']
         passport.issueDate = item['issueDate']
         passport.expirationDate = item['expirationDate']
@@ -338,7 +338,7 @@ def import_data_from_json(element):
 
     for item in element.akaList:
         aka = sanction_USA_aka.SanctionUSAAka()
-        aka.uid = int(item['uid'])
+        aka.uid = item['uid']
         aka.type = item['type']
         aka.lastName = item['lastName']
         aka.firstName = item['firstName']
@@ -348,7 +348,7 @@ def import_data_from_json(element):
 
     for item in element.addressList:
         address = sanction_USA_address.SanctionUSAAddress()
-        address.uid = int(item['uid'])
+        address.uid = item['uid']
         address.address1 = item['address1']
         address.address2 = item['address2']
         address.address3 = item['address3']
@@ -360,42 +360,45 @@ def import_data_from_json(element):
 
     for item in element.nationalityList:
         nationality = sanction_USA_nationality.SanctionUSANationality()
-        nationality.uid = int(item['uid'])
+        nationality.uid = item['uid']
         nationality.country = item['country']
         nationality.mainEntry = item['mainEntry']
         nationalityList.append(nationality)
 
     for item in element.citizenshipList:
         nationality = sanction_USA_nationality.SanctionUSANationality()
-        nationality.uid = int(item['uid'])
+        nationality.uid = item['uid']
         nationality.country = item['country']
         nationality.mainEntry = item['mainEntry']
         citizenshipList.append(nationality)
 
     for item in element.dateOfBirthList:
         dateOfBirth = sanction_USA_dateofbirth.SanctionUSADateOfBirth()
-        dateOfBirth.uid = int(item['uid'])
+        dateOfBirth.uid = item['uid']
         dateOfBirth.dateOfBirth = item['dateOfBirth']
         dateOfBirth.mainEntry = item['mainEntry']
         dateOfBirthList.append(dateOfBirth)
 
     for item in element.placeOfBirthList:
         placeOfBirth = sanction_USA_placeofbirth.SanctionUSAPlaceOfBirth()
-        placeOfBirth.uid = int(item['uid'])
+        placeOfBirth.uid = item['uid']
         placeOfBirth.placeOfBirth = item['placeOfBirth']
         placeOfBirth.mainEntry = item['mainEntry']
         placeOfBirthList.append(placeOfBirth)
 
-    for item in element.vesselInfo:
-        vessel = sanction_USA_vessel.SanctionUSAVessel()
-        vessel.uid = int(item['uid'])
-        vessel.vesselOwner = item['vesselOwner']
-        vessel.vesselType = item['vesselType']
-        vessel.vesselFlag = item['vesselFlag']
-        vessel.tonnage = item['tonnage']
-        vessel.callSign = item['callSign']
-        vessel.grossRegisteredTonnage = item['grossRegisteredTonnage']
-        vesselInfo.append(vessel)
+    try:
+        for item in element.vesselInfo:
+            vessel = sanction_USA_vessel.SanctionUSAVessel()
+            vessel.uid = item['uid']
+            vessel.vesselOwner = item['vesselOwner']
+            vessel.vesselType = item['vesselType']
+            vessel.vesselFlag = item['vesselFlag']
+            vessel.tonnage = item['tonnage']
+            vessel.callSign = item['callSign']
+            vessel.grossRegisteredTonnage = item['grossRegisteredTonnage']
+            vesselInfo.append(vessel)
+    except Exception:
+        pass
 
     return sanction_USA.SanctionUSA(uid, firstName, lastName, title, sdnType, remarks, programList, idList,
                                         akaList, addressList, nationalityList, citizenshipList, dateOfBirthList,

@@ -1,10 +1,11 @@
 import os
+import re
 
 import aiohttp
 
-from Search import elasticsearch_handler, bulk_sanctions_search
+from Search import elasticsearch_handler, bulk_sanctions_search, bulk_companies_search, opencorporates_handler
 from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp, import_sanctions_ca, \
-    import_sanctions_usa_consolidated, import_sanctions_ch
+    import_sanctions_usa_consolidated, import_sanctions_ch, bg_checks_import
 import asyncio
 
 
@@ -35,13 +36,22 @@ async def main():
     # os.environ['AIOHTTP_NO_EXTENSIONS'] = '1'
     #print(os.environ.get('AIOHTTP_NO_EXTENSIONS'))
     #await elasticsearch_handler.create_index()
-    r = await bulk_sanctions_search.search_entities()
+    #await bulk_sanctions_search.search_entities()
 
-    #async with aiohttp.ClientSession() as session:
+    # await elasticsearch_handler.import_ua_companies()
+    # await bulk_companies_search.search_entities()
+    # await bulk_companies_search.search_founders()
+
+    #print(translit.to_cyrillic('LLC "DIESA"', 'ua'))
+
+    async with aiohttp.ClientSession() as session:
+        r1 = await opensanctions_handler.find_officer_count_by_name(session, 'Andrea Vallabh')
         #r1, d1 = await import_sanctions_jp.import_data_from_web(session)
+    #bg_checks_import.parse_checks()
+
 
     print('done')
-    return r
+    return
 
 
 asyncio.run(main())
