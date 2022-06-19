@@ -14,12 +14,13 @@ def main_view(request):
 
 async def search(request):
     search_string = request.POST["search"]
+    req_text = search_string.replace(' ', '+')
     nominal = False
 
     sanctions = await elasticsearch_handler.search_fuzzy_request(search_string)
     try:
-        officer_count = await opencorporates_handler.find_officer_count_by_name(request)
-    except Exception:
+        officer_count = await opencorporates_handler.find_officer_count_by_name(search_string)
+    except Exception as e:
         officer_count = 0
 
     if officer_count > 5:
@@ -37,7 +38,8 @@ async def search(request):
         i = i+1
 
     return render(request, 'search.html', {'search_string': search_string, 'sanctions': sanctions,
-                                           'count': len(sanctions), 'nominal': nominal, 'officer_count': officer_count})
+                                           'count': len(sanctions), 'nominal': nominal, 'officer_count': officer_count,
+                                           'req_text': req_text})
 
 
 def donate(request):

@@ -54,20 +54,24 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                     <!-- [ tabs ] start -->
+                                        {% if nominal == True %}
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h5><b style="color: red">WARNING! </b>Possible nominal shareholder</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p>This person or entity is an officer in a {{ officer_count }} companies in different jurisdictions.<br></p>
+                                                    <a href="https://opencorporates.com/officers?jurisdiction_code=&q={{ req_text }}&utf8=%E2%9C%93">More Details</a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
                                         {% if count == 0 %}
                                             <div class="card">
                                                 <div class="card-header">
                                                     <h5>Your request was not found in sanctions lists</h5>
                                                 </div>
-                                            </div>
-                                        {% endif %}
-                                        {% if nominal == True %}
-                                            <div class="card">
-                                                <div class="card-header">
-                                                    <h5 style="color: red"><b>WARNING! </b></h5><h5>This person or entity can be a nominal shareholder</h5>
-                                                </div>
                                                 <div class="card-body">
-                                                    <p>This person is an officer in a {{ officer_count }} companies in different jurisdictions.</p>
+                                                    <p>Consider trying only last name of the person or key part of the company's name.</p>
                                                 </div>
                                             </div>
                                         {% endif %}
