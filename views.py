@@ -1,11 +1,17 @@
 # Create your views here.
+import os
+
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
-from Search import elasticsearch_handler, opencorporates_handler
+from Search import elasticsearch_handler, opencorporates_handler, bulk_sanctions_search
+from Lexcovery_Sanctions import settings
 import re
 import datetime
 import aiohttp
 import asyncio
 import nest_asyncio
+from forms import UploadFileForm
+import mimetypes
 
 
 def main_view(request):
@@ -77,3 +83,32 @@ async def upload(request):
         result = 'Index created at ' + update
     return render(request, 'upload.html', {'result': result})
 
+
+async def bulk_search(request):
+    link = False
+    file = ''
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            await bulk_sanctions_search.search_entities(request.FILES['file'])
+            link = True
+            #file = os.path.join(settings.BASE_DIR, 'tmp') + '/result.xlsx'
+    else:
+        form = UploadFileForm()
+    return render(request, 'bulk_search.html', {'form': form, 'link': link, 'file' : file})
+
+
+async def download_file(request):
+    #file = request.GET.get('file')
+    file = 'result.xlsx'
+    # Open the file for reading content
+    #path = open(file, 'rb')
+    path = bulk_sanctions_search.result_file
+    # Set the mime type
+    mime_type, _ = mimetypes.guess_type(file)
+    # Set the return value of the HttpResponse
+    response = HttpResponse(path, content_type=mime_type)
+    # Set the HTTP header for sending to browser
+    response['Content-Disposition'] = "attachment; filename=result.xlsx"
+    # Return the response value
+    return response

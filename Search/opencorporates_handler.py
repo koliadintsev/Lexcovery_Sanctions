@@ -19,7 +19,7 @@ async def find_officer_count_by_name(name: str):
         cap_count = 0
 
         request_low = 'officers/search?q=' + req_text_low
-        response_low = await session.request(method='GET', url=API_URL + request_low)
+        response_low = await session.request(method='GET', url=API_URL + request_low, params={'api_token': 'jxmgEivIjosarjaLoVyk'})
         if response_low.ok:
             doc = await response_low.read()
             res = json.loads(doc)
