@@ -15,7 +15,7 @@ async def main():
     # print(translit.is_latin('حاجی خيرالله و حاجی ستار صرافی'))
 
     # print(translit.is_cyrillic('hui'))
-    # print(translit.is_cyrillic('хуй'))
+    #print(translit.is_cyrillic('хуй'))
     # print(translit.is_cyrillic('حاجی خيرالله و حاجی ستار صرافی'))
 
     # print(translit.to_latin('Федеральна державна бюджетна установа науки "Федеральний дослідний центр "Інститут біології південних морів ім. О.О.Ковалевського РАН"', 'ua'))
@@ -44,8 +44,8 @@ async def main():
 
     #print(translit.to_cyrillic('LLC "DIESA"', 'ua'))
 
-    async with aiohttp.ClientSession() as session:
-        r1 = await opensanctions_handler.find_officer_count_by_name(session, 'Andrea Vallabh')
+    #async with aiohttp.ClientSession() as session:
+        #r1 = await opensanctions_handler.find_officer_count_by_name(session, 'Andrea Vallabh')
         #r1, d1 = await import_sanctions_jp.import_data_from_web(session)
     #bg_checks_import.parse_checks()
 
