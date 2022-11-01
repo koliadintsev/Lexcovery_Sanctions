@@ -34,6 +34,7 @@ ELASTIC_PASSWORD_DEBUG = 'QB37tfNded112LGBoUsk'
 ELASTIC_PASSWORD = "54rV2zeqXtp7AoYDP5MGnEBP"
 HTTP_CA_fingerprint = '835009b97f1643505f429aeb80acbdb4f7a01de1c3d360219f4f9b7933384a20'
 HTTP_CA_FILENAME = os.path.join(settings.BASE_DIR,  'static') + "/ca_certs/http_ca.crt"
+HTTP_CA_FILENAME_DEBUG = os.path.join(settings.BASE_DIR,  'static') + "/ca_certs/debug/http_ca.crt"
 api_key = "sanctions"
 api_key_pass = "Z0hHTTBIOEJURDllSmF2OHlwZ3k6cjRlTnBBbGVSTGEzLV9kczU5N1J5Zw=="
 # Found in the 'Manage Deployment' page
