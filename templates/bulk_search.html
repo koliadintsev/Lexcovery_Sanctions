@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Sanctions Search {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+       <div class="main-body">
+            <div class="page-wrapper">
+                <!-- [ Main Content ] start -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-12">
+                            {% if link == True %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Search results</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p>Search successful!</p>
+                                                <a href= /download/?file={{ file }} >Download results</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Bulk search</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p>Please upload the file with records to search</p>
+                                        <a href="/static/Sanctions/Search/check_template.xlsx" download>Request template</a>
+                                        <p><br></p>
+                                        <form method="post" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                            {{ form }}
+                                            <button type="submit">Upload</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+       </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

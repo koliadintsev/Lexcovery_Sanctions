@@ -4,6 +4,7 @@ import os
 import re
 
 import openpyxl
+from django.core.files.temp import NamedTemporaryFile
 from openpyxl.styles import Font
 from Lexcovery_Sanctions import settings
 import requests
@@ -11,26 +12,29 @@ from dateutil.parser import parse
 import aiohttp
 import asyncio
 from io import BytesIO
-from Search import elasticsearch_handler
+from Search import elasticsearch_handler, opencorporates_handler
 
 SEARCH_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/check.xlsx"
-SAVE_RESULT = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/result.xlsx"
+#SAVE_RESULT = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/result.xlsx"
+#SAVE_RESULT = os.path.join(settings.BASE_DIR,  'media') + "/Sanctions/Search/result.xlsx"
+SAVE_RESULT = os.path.join(settings.BASE_DIR,  'tmp') + "/result.xlsx"
+result_file = ''
 entities_to_check=[]
 check_results=[]
 
 
-async def search_entities():
+async def search_entities(file=SEARCH_LIST):
     global entities_to_check
-    await import_entities_from_xls()
+    await import_entities_from_xls(file)
     await asyncio.gather(*[fuzzy_search(request) for request in entities_to_check])
     write_result()
 
 
-async def import_entities_from_xls():
+async def import_entities_from_xls(file=SEARCH_LIST):
     global entities_to_check
 
     # Define variable to load the workbook
-    workbook = openpyxl.load_workbook(SEARCH_LIST)
+    workbook = openpyxl.load_workbook(file)
 
     # Define variable to read the active sheet:
     for sheet in workbook.worksheets:
@@ -56,6 +60,7 @@ async def fuzzy_search(request):
 
     doc_id = request['id']
     entity = request['request']
+    nominal = False
 
     result_auto = await elasticsearch_handler.search_fuzzy_request(entity, "AUTO")
     result_one = await elasticsearch_handler.search_fuzzy_request(entity, 2)
@@ -68,7 +73,7 @@ async def fuzzy_search(request):
                 found = True
         if not found:
             result.append(hit)
-
+    '''
     request_parts = entity.split()
     if len(request_parts) <=3:
         for s in request_parts:
@@ -82,16 +87,24 @@ async def fuzzy_search(request):
                             found = True
                     if not found:
                         result.append(hit)
+    '''
+    try:
+        officer_count = await opencorporates_handler.find_officer_count_by_name(entity)
+    except Exception as e:
+        officer_count = 0
+    if officer_count > 5:
+        nominal = True
 
     if len(result) == 0:
         return
     else:
-        check = {'id': doc_id, 'request': entity, 'result': result}
+        check = {'id': doc_id, 'request': entity, 'result': result, 'nominal': nominal}
         check_results.append(check)
 
 
 def write_result():
     global check_results
+    global result_file
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -106,6 +119,7 @@ def write_result():
     ws['H1'] = 'Nationality'
     ws['I1'] = 'Address and Contacts'
     ws['J1'] = 'Additional Information'
+    ws['K1'] = 'Nominal'
     header_row = ws.row_dimensions[1]
     header_row.font = Font(bold=True)
 
@@ -122,8 +136,18 @@ def write_result():
             ws.cell(last_row, 8).value = result.nationality
             ws.cell(last_row, 9).value = result.address
             ws.cell(last_row, 10).value = result.additional_info
+            if entity['nominal']:
+                ws.cell(last_row, 11).hyperlink = 'https://opencorporates.com/officers?jurisdiction_code=&q='+entity['request']+'&utf8=%E2%9C%93'
+                ws.cell(last_row, 11).value = 'Possible nominal. Click for details.'
+                ws.cell(last_row, 11).style = "Hyperlink"
+            else:
+                ws.cell(last_row, 11).value = 'No'
             last_row = last_row + 1
 
     wb.save(SAVE_RESULT)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        result_file = tmp.read()
 
 

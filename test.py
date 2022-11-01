@@ -35,7 +35,9 @@ async def main():
     # r1, d1 = import_sanctions_ch.import_data_from_xml()
     # os.environ['AIOHTTP_NO_EXTENSIONS'] = '1'
     #print(os.environ.get('AIOHTTP_NO_EXTENSIONS'))
-    #await elasticsearch_handler.create_index()
+    #r = await elasticsearch_handler.search_fuzzy_request('Oleh Derypaska')
+    #print(r)
+    await elasticsearch_handler.create_index()
     #await bulk_sanctions_search.search_entities()
 
     # await elasticsearch_handler.import_ua_companies()
@@ -43,9 +45,8 @@ async def main():
     # await bulk_companies_search.search_founders()
 
     #print(translit.to_cyrillic('LLC "DIESA"', 'ua'))
-
-    async with aiohttp.ClientSession() as session:
-        r1 = await opensanctions_handler.find_officer_count_by_name(session, 'Andrea Vallabh')
+    #r1 = await opencorporates_handler.find_officer_count_by_name('Andrea Vallabh')
+    #async with aiohttp.ClientSession() as session:
         #r1, d1 = await import_sanctions_jp.import_data_from_web(session)
     #bg_checks_import.parse_checks()
 
