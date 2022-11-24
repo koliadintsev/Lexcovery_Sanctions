@@ -144,7 +144,8 @@ def write_result():
                 ws.cell(last_row, 11).value = 'No'
             last_row = last_row + 1
 
-    wb.save(SAVE_RESULT)
+    #wb.save(SAVE_RESULT)
+
     with NamedTemporaryFile() as tmp:
         wb.save(tmp.name)
         tmp.seek(0)

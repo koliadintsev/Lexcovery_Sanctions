@@ -57,6 +57,7 @@ class CompanyNAZKUA:
         self.search_fields = [self.name_en, self.name_uk, self.name_ru]
 
     def webify(self):
+        country = 'ua'
         main_name = self.name_en
         names = ''
         if self.name_uk:
@@ -74,7 +75,11 @@ class CompanyNAZKUA:
             urls = urls + '<a href="' + self.link + '">OpenSanctions</a>' + ';\n'
         if self.link_archive:
             urls = urls + '<a href="' + self.link_archive + '">Archive</a>'
-        program = self.reasoning_en + ';\n' + 'Start date: ' + start_date
+        program = ''
+        if self.status == '2':
+            program = sanction_web.UA_RISK_WORDING
+            country = 'xx'
+        program = program + self.reasoning_en + ';\n' + 'Start date: ' + start_date
         nationality = self.country
         address = self.address_en
         personal_details = ''
@@ -93,7 +98,7 @@ class CompanyNAZKUA:
 
         additional_info = urls
 
-        sanction = sanction_web.SanctionWeb(main_name=main_name, names=names, sanctioned_by='ua',
+        sanction = sanction_web.SanctionWeb(main_name=main_name, names=names, sanctioned_by=country,
                                             program=program, nationality=nationality, address=address,
                                             personal_details=personal_details, additional_info=additional_info,
                                             id=self.id)

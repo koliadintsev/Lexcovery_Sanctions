@@ -3,6 +3,10 @@ from DataModel import sanction_web
 
 class IndividualNAZKUA:
 
+    UA_RISK_WORDING = "THIS PERSON OR COMPANY IS NOT SANCTIONED\nHowever, this person or company " \
+                      "is in close connection with sanctioned one\n and may be ' \
+                    'sanctioned at any time\n"
+
     def __init__(self, person_id='', name_en='', name_ru='', name_uk='', country='', position_uk='',
                  position_en='', position_ru='', reasoning_uk='', reasoning_en='',
                  reasoning_ru='', category='', subcategory_1='',
@@ -60,6 +64,7 @@ class IndividualNAZKUA:
         self.search_fields = [self.name_en, self.name_uk, self.name_ru]
 
     def webify(self):
+        country = 'ua'
         main_name = self.name_en
         names = ''
         if self.name_uk:
@@ -75,7 +80,11 @@ class IndividualNAZKUA:
             urls = urls + '<a href="' + self.link + '">OpenSanctions</a>' + ';\n'
         if self.link_archive:
             urls = urls + '<a href="' + self.link_archive + '">Archive</a>' + ';\n'
-        program = self.position_en + ';\n' + self.reasoning_en + ';\n' + 'Start date: ' + start_date
+        program = ''
+        if self.status == '2':
+            program = sanction_web.UA_RISK_WORDING
+            country = 'xx'
+        program = program + self.position_en + ';\n' + self.reasoning_en + ';\n' + 'Start date: ' + start_date
         nationality = self.country
         address = 'City of birth: ' + self.city_bd_en
         personal_details = ''
@@ -98,7 +107,7 @@ class IndividualNAZKUA:
 
         additional_info = urls
 
-        sanction = sanction_web.SanctionWeb(main_name=main_name, names=names, sanctioned_by='ua',
+        sanction = sanction_web.SanctionWeb(main_name=main_name, names=names, sanctioned_by=country,
                                             program=program, nationality=nationality, address=address,
                                             personal_details=personal_details, additional_info=additional_info,
                                             id=self.id)

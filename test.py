@@ -5,7 +5,7 @@ import aiohttp
 
 from Search import elasticsearch_handler, bulk_sanctions_search, bulk_companies_search, opencorporates_handler
 from DataImport import translit, import_sanctions_ua, import_sanctions_uk, import_sanctions_jp, import_sanctions_ca, \
-    import_sanctions_usa_consolidated, import_sanctions_ch, bg_checks_import
+    import_sanctions_usa_consolidated, import_sanctions_ch, bg_checks_import, import_sanctions_ua_nazk
 import asyncio
 
 
@@ -39,6 +39,7 @@ async def main():
     #print(r)
     await elasticsearch_handler.create_index()
     #await bulk_sanctions_search.search_entities()
+
 
     # await elasticsearch_handler.import_ua_companies()
     # await bulk_companies_search.search_entities()

@@ -1,3 +1,7 @@
+UA_RISK_WORDING = "THIS PERSON OR COMPANY IS NOT SANCTIONED\nHowever, this person or company " \
+                         "is in close connection with sanctioned one\n and may be  " \
+                         "sanctioned at any time\n"
+
 class SanctionWeb:
 
     def __init__(self, main_name = '', names = '', sanctioned_by = '', program = '', nationality = '', address = '',

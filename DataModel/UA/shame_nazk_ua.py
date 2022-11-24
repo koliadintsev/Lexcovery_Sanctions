@@ -1,6 +1,5 @@
 from DataModel import sanction_web
 
-
 class ShameNAZKUA:
 
     def __init__(self, shame_id='', person_id='', company_id='', status='',
@@ -51,8 +50,7 @@ class ShameNAZKUA:
         urls = ''
         if self.linkedin:
             urls = '<a href="' + self.linkedin + '">LinkedIn</a>' + ';\n'
-        program = 'THIS PERSON IS NOT UNDER SANCTIONS\nHowever, this person works on C-level for russian company and may be ' \
-                  'sanctioned at any time\n' + 'Position' + self.position_en + ';\n' + 'Company:' + self.company_name_en + \
+        program = sanction_web.UA_RISK_WORDING + 'Position' + self.position_en + ';\n' + 'Company:' + self.company_name_en + \
                   ';\n' + 'Details: ' + self.work_other_en
         nationality = self.country
         address = 'Place of birth: ' + self.birthplace_en

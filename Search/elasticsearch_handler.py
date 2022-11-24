@@ -14,7 +14,7 @@ import jsons
 from DataImport import import_sanctions_eu, import_sanctions_uk, import_sanctions_jp, import_sanctions_au, \
     import_sanctions_usa_consolidated, import_companies_ua
 from DataImport import import_sanctions_usa, import_sanctions_ua, import_sanctions_uk_consolidated
-from DataImport import import_sanctions_ca, import_sanctions_ch
+from DataImport import import_sanctions_ca, import_sanctions_ch, import_sanctions_ua_nazk
 from Search import opencorporates_handler
 import copy
 from Lexcovery_Sanctions import settings
@@ -47,6 +47,8 @@ sanctions_EU = []
 sanctions_UK = []
 sanctions_UK_Cons = []
 sanctions_UA = []
+sanctions_UA_NAZK_Person = []
+sanctions_UA_NAZK_Company = []
 sanctions_JP = []
 sanctions_AU = []
 sanctions_CA = []
@@ -58,6 +60,8 @@ bulk_UK = []
 bulk_UK_Cons = []
 bulk_EU = []
 bulk_UA = []
+bulk_UA_NAZK_Person = []
+bulk_UA_NAZK_Company = []
 bulk_JP = []
 bulk_AU = []
 bulk_CA = []
@@ -69,6 +73,7 @@ last_update_uk = ''
 last_update_uk_cons = ''
 last_update_eu = ''
 last_update_ua = ''
+last_update_ua_nazk = ''
 last_update_jp = ''
 last_update_au = ''
 last_update_ca = ''
@@ -77,7 +82,7 @@ last_update_ch = ''
 DONE_IMPORT = {}
 DONE_JSON = {}
 
-LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA", "JP", "AU", "CA", "CH"]
+LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA", "UA_NAZK_Company", "UA_NAZK_Person", "JP", "AU", "CA", "CH"]
 
 DEBUG = True
 
@@ -136,6 +141,8 @@ async def create_index():
     client.indices.create(index="sanctions_uk_cons")
     client.indices.create(index="sanctions_eu")
     client.indices.create(index="sanctions_ua")
+    client.indices.create(index="sanctions_ua_nazk_company")
+    client.indices.create(index="sanctions_ua_nazk_person")
     client.indices.create(index="sanctions_jp")
     client.indices.create(index="sanctions_au")
     client.indices.create(index="sanctions_ca")
@@ -157,6 +164,8 @@ async def create_index():
     helpers.bulk(client, bulk_UK_Cons, chunk_size=1000, request_timeout=200, index='sanctions_uk_cons')
     helpers.bulk(client, bulk_EU, chunk_size=1000, request_timeout=200, index='sanctions_eu')
     helpers.bulk(client, bulk_UA, chunk_size=1000, request_timeout=200, index='sanctions_ua')
+    helpers.bulk(client, bulk_UA_NAZK_Company, chunk_size=1000, request_timeout=200, index='sanctions_ua_nazk_company')
+    helpers.bulk(client, bulk_UA_NAZK_Person, chunk_size=1000, request_timeout=200, index='sanctions_ua_nazk_person')
     helpers.bulk(client, bulk_JP, chunk_size=1000, request_timeout=200, index='sanctions_jp')
     helpers.bulk(client, bulk_AU, chunk_size=1000, request_timeout=200, index='sanctions_au')
     helpers.bulk(client, bulk_CA, chunk_size=1000, request_timeout=200, index='sanctions_ca')
@@ -182,6 +191,10 @@ async def sanction_to_json_list(list_name):
             await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_EU])
         elif list_name == "UA":
             await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UA])
+        elif list_name == "UA_NAZK_Company":
+            await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UA_NAZK_Company])
+        elif list_name == "UA_NAZK_Person":
+            await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_UA_NAZK_Person])
         elif list_name == "JP":
             await asyncio.gather(*[sanction_to_json(sanction, list_name) for sanction in sanctions_JP])
         elif list_name == "AU":
@@ -220,6 +233,12 @@ async def sanction_to_json(sanction, list_name):
     elif list_name == "UA":
         dict = jsons.dump(sanction)
         bulk_UA.append(copy.deepcopy(dict))
+    elif list_name == "UA_NAZK_Company":
+        dict = jsons.dump(sanction)
+        bulk_UA_NAZK_Company.append(copy.deepcopy(dict))
+    elif list_name == "UA_NAZK_Person":
+        dict = jsons.dump(sanction)
+        bulk_UA_NAZK_Person.append(copy.deepcopy(dict))
     elif list_name == "JP":
         dict = jsons.dump(sanction)
         bulk_JP.append(copy.deepcopy(dict))
@@ -258,6 +277,14 @@ def delete_index():
         pass
     try:
         client.indices.delete(index="sanctions_ua")
+    except exceptions.TransportError:
+        pass
+    try:
+        client.indices.delete(index="sanctions_ua_nazk_company")
+    except exceptions.TransportError:
+        pass
+    try:
+        client.indices.delete(index="sanctions_ua_nazk_person")
     except exceptions.TransportError:
         pass
     try:
@@ -311,6 +338,10 @@ async def search_fuzzy_request(request, fuzziness="AUTO"):
             s = Search().using(client).index("sanctions_eu").query(query)
         elif list_name == "UA":
             s = Search().using(client).index("sanctions_ua").query(query)
+        elif list_name == "UA_NAZK_Company":
+            s = Search().using(client).index("sanctions_ua_nazk_company").query(query)
+        elif list_name == "UA_NAZK_Person":
+            s = Search().using(client).index("sanctions_ua_nazk_person").query(query)
         elif list_name == "JP":
             s = Search().using(client).index("sanctions_jp").query(query)
         elif list_name == "AU":
@@ -399,6 +430,14 @@ async def search_fuzzy_request(request, fuzziness="AUTO"):
         elif doc["index"] == "sanctions_ua":
             sanction = import_sanctions_ua.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
+        elif doc["index"] == "sanctions_ua_nazk_company":
+            sanction = import_sanctions_ua_nazk.import_company_record_from_json(hit)
+            if sanction.sanctions_ua == '1' or sanction.status == '2':
+                result.append(copy.deepcopy(sanction.webify()))
+        elif doc["index"] == "sanctions_ua_nazk_person":
+            sanction = import_sanctions_ua_nazk.import_person_record_from_json(hit)
+            if sanction.sanctions_ua == '1' or sanction.status == '2':
+                result.append(copy.deepcopy(sanction.webify()))
         elif doc["index"] == "sanctions_jp":
             sanction = import_sanctions_jp.import_data_from_json(hit)
             result.append(copy.deepcopy(sanction.webify()))
@@ -444,6 +483,8 @@ async def import_one_list(list_name, session):
     global sanctions_AU
     global sanctions_CA
     global sanctions_CH
+    global sanctions_UA_NAZK_Company
+    global sanctions_UA_NAZK_Person
 
     global last_update_us
     global last_update_us_cons
@@ -495,6 +536,18 @@ async def import_one_list(list_name, session):
                 sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_web(session)
             except Exception as e:
                 sanctions_UA, last_update_ua = await import_sanctions_ua.import_data_from_xls()
+                print(list_name + ' loaded from local file')
+        elif list_name == "UA_NAZK_Company":
+            try:
+                sanctions_UA_NAZK_Company, last_update_ua = await import_sanctions_ua_nazk.import_company_from_web(session)
+            except Exception as e:
+                sanctions_UA_NAZK_Company, last_update_ua = await import_sanctions_ua_nazk.import_company_list_from_csv()
+                print(list_name + ' loaded from local file')
+        elif list_name == "UA_NAZK_Person":
+            try:
+                sanctions_UA_NAZK_Person, last_update_ua = await import_sanctions_ua_nazk.import_person_from_web(session)
+            except Exception as e:
+                sanctions_UA_NAZK_Person, last_update_ua = await import_sanctions_ua_nazk.import_person_list_from_csv()
                 print(list_name + ' loaded from local file')
         elif list_name == "JP":
             try:
