@@ -92,6 +92,7 @@ async def bulk_search(request):
         if form.is_valid():
             await bulk_sanctions_search.search_entities(request.FILES['file'])
             link = True
+            file = bulk_sanctions_search.result_file
             #file = os.path.join(settings.BASE_DIR, 'tmp') + '/result.xlsx'
     else:
         form = UploadFileForm()
@@ -103,6 +104,9 @@ async def download_file(request):
     file = 'result.xlsx'
     # Open the file for reading content
     #path = open(file, 'rb')
+    #path_name = request.GET.get('file')
+    #path = bulk_sanctions_search.result_file[path_name]
+    #path = open(path_name, 'rb')
     path = bulk_sanctions_search.result_file
     # Set the mime type
     mime_type, _ = mimetypes.guess_type(file)

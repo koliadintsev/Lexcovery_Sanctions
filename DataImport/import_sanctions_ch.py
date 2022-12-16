@@ -456,11 +456,11 @@ def parse_identity_from_json(element):
 
         place_of_issue = SanctionCHPlace()
         place = item['place_of_issue']
-        if place is not None:
-            place_of_issue.ssid = place['ssid']
-            place_of_issue.area = place['area']
-            place_of_issue.location = place['location']
-            place_of_issue.country = place['country']
+        #if place is not None:
+        #    place_of_issue.ssid = place['ssid']
+        #    place_of_issue.area = place['area']
+        #    place_of_issue.location = place['location']
+        #    place_of_issue.country = place['country']
 
         document = SanctionCHDocument(ssid=document_ssid, document_type=document_type, number=number, issuer=issuer,
                                       date_of_issue=date_of_issue, place_of_issue=place_of_issue, place_id=place_id,

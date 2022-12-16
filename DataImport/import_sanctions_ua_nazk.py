@@ -85,12 +85,14 @@ async def import_person_from_web(session):
 
 async def import_person_from_json(record):
     sanction = import_person_record_from_json(record)
-    sanctions_persons.append(sanction)
+    if sanction.sanctions_ua == '1' or sanction.status == '2':
+        sanctions_persons.append(sanction)
 
 
 async def import_company_from_json(record):
     sanction = import_company_record_from_json(record)
-    sanctions_companies.append(sanction)
+    if sanction.sanctions_ua == '1' or sanction.status == '2':
+        sanctions_companies.append(sanction)
 
 
 async def import_company_list_from_csv():
@@ -101,11 +103,11 @@ async def import_company_list_from_csv():
     companies_csv = open(COMPANIES_LIST, "r")
     companies_risk_csv = open(COMPANIES_RISK_LIST, "r")
 
-    companies_csv_file = reader(companies_csv, delimiter=",")
+    companies_csv_file = reader(companies_csv, delimiter=";")
     # skip first line with headers
     next(companies_csv_file)
 
-    companies_risk_csv_file = reader(companies_risk_csv, delimiter=",")
+    companies_risk_csv_file = reader(companies_risk_csv, delimiter=";")
     # skip first line with headers
     next(companies_risk_csv_file)
 
@@ -126,11 +128,11 @@ async def import_person_list_from_csv():
     persons_csv = open(PERSONS_LIST, "r")
     persons_risk_csv = open(PERSONS_RISK_LIST, "r")
 
-    persons_csv_file = reader(persons_csv, delimiter=",")
+    persons_csv_file = reader(persons_csv, delimiter=";")
     # skip first line with headers
     next(persons_csv_file)
 
-    persons_risk_csv_file = reader(persons_risk_csv, delimiter=",")
+    persons_risk_csv_file = reader(persons_risk_csv, delimiter=";")
     # skip first line with headers
     next(persons_risk_csv_file)
 
@@ -145,12 +147,14 @@ async def import_person_list_from_csv():
 
 async def import_person_from_csv(row):
     sanction = import_person_record_from_csv(row)
-    sanctions_persons.append(sanction)
+    if sanction.sanctions_ua == '1' or sanction.status == '2':
+        sanctions_persons.append(sanction)
 
 
 async def import_company_from_csv(row):
     sanction = import_company_record_from_csv(row)
-    sanctions_companies.append(sanction)
+    if sanction.sanctions_ua == '1' or sanction.status == '2':
+        sanctions_companies.append(sanction)
 
 
 def import_person_record_from_csv(row):
@@ -199,6 +203,7 @@ def import_person_record_from_csv(row):
     #        start_date = parse(row[9]).date().strftime("%d/%m/%Y")
     #    except Exception:
     #        start_date = row[9]
+
 
     sanction = individual_nazk_ua.IndividualNAZKUA(person_id=person_id, name_en=name_en, name_ru=name_ru, name_uk=name_uk, country=country,
                                                    position_uk=position_uk,

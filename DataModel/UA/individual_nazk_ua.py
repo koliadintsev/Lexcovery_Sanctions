@@ -75,16 +75,18 @@ class IndividualNAZKUA:
         start_date = self.sanctions_ua_date
         urls = ''
         if self.url_ua:
-            urls = '<a href="' + self.url_ua + '">Sanctions List</a>' + ';\n'
+            urls = '<a href="' + self.url_ua + '">Sanctions List</a>' + '\n'
         if self.link:
-            urls = urls + '<a href="' + self.link + '">OpenSanctions</a>' + ';\n'
+            urls = urls + '<a href="' + self.link + '">OpenSanctions</a>' + '\n'
         if self.link_archive:
-            urls = urls + '<a href="' + self.link_archive + '">Archive</a>' + ';\n'
+            urls = urls + '<a href="' + self.link_archive + '">Archive</a>' + '\n'
         program = ''
         if self.status == '2':
             program = sanction_web.UA_RISK_WORDING
             country = 'xx'
-        program = program + self.position_en + ';\n' + self.reasoning_en + ';\n' + 'Start date: ' + start_date
+        program = program + self.position_en + ';\n' + self.reasoning_en + ';\n'
+        if start_date:
+            program = program + 'Start date: ' + start_date
         nationality = self.country
         address = 'City of birth: ' + self.city_bd_en
         personal_details = ''

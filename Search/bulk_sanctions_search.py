@@ -14,13 +14,13 @@ import asyncio
 from io import BytesIO
 from Search import elasticsearch_handler, opencorporates_handler
 
-SEARCH_LIST = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/check.xlsx"
-#SAVE_RESULT = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/result.xlsx"
-#SAVE_RESULT = os.path.join(settings.BASE_DIR,  'media') + "/Sanctions/Search/result.xlsx"
-SAVE_RESULT = os.path.join(settings.BASE_DIR,  'tmp') + "/result.xlsx"
+SEARCH_LIST = os.path.join(settings.BASE_DIR, 'static') + "/Sanctions/Search/check.xlsx"
+# SAVE_RESULT = os.path.join(settings.BASE_DIR,  'static') + "/Sanctions/Search/result.xlsx"
+# SAVE_RESULT = os.path.join(settings.BASE_DIR,  'media') + "/Sanctions/Search/result.xlsx"
+SAVE_RESULT = os.path.join(settings.BASE_DIR, 'tmp') + "/result.xlsx"
 result_file = ''
-entities_to_check=[]
-check_results=[]
+entities_to_check = []
+check_results = []
 
 
 async def search_entities(file=SEARCH_LIST):
@@ -38,8 +38,9 @@ async def import_entities_from_xls(file=SEARCH_LIST):
 
     # Define variable to read the active sheet:
     for sheet in workbook.worksheets:
-        await asyncio.gather(*[import_from_entity_async(row) for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True)])
-    #print('import finished')
+        await asyncio.gather(*[import_from_entity_async(row) for row in
+                               sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True)])
+    # print('import finished')
 
 
 async def import_from_entity_async(row):
@@ -137,18 +138,18 @@ def write_result():
             ws.cell(last_row, 9).value = result.address
             ws.cell(last_row, 10).value = result.additional_info
             if entity['nominal']:
-                ws.cell(last_row, 11).hyperlink = 'https://opencorporates.com/officers?jurisdiction_code=&q='+entity['request']+'&utf8=%E2%9C%93'
+                ws.cell(last_row, 11).hyperlink = 'https://opencorporates.com/officers?jurisdiction_code=&q=' + entity[
+                    'request'] + '&utf8=%E2%9C%93'
                 ws.cell(last_row, 11).value = 'Possible nominal. Click for details.'
                 ws.cell(last_row, 11).style = "Hyperlink"
             else:
                 ws.cell(last_row, 11).value = 'No'
             last_row = last_row + 1
 
-    #wb.save(SAVE_RESULT)
+    # wb.save(SAVE_RESULT)
 
-    with NamedTemporaryFile() as tmp:
+    with NamedTemporaryFile(delete=True) as tmp:
         wb.save(tmp.name)
         tmp.seek(0)
-        result_file = tmp.read()
-
-
+        result_file = copy.deepcopy(tmp.read())
+        #result_file = result_file.update({tmp.name: tmp.read()})

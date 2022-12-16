@@ -82,9 +82,9 @@ last_update_ch = ''
 DONE_IMPORT = {}
 DONE_JSON = {}
 
-LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA", "UA_NAZK_Company", "UA_NAZK_Person", "JP", "AU", "CA", "CH"]
+LIST_SANCTIONS = ["US", "US_Cons", "UK", "UK_Cons", "EU", "UA_NAZK_Company", "UA_NAZK_Person", "JP", "AU", "CA", "CH"]
 
-DEBUG = True
+DEBUG = False
 
 def ping(client):
     # Successful response!
@@ -103,8 +103,7 @@ def initialize_client():
     else:
         client = Elasticsearch(
             SERVER_URL,
-            ca_certs=HTTP_CA_FILENAME,
-            http_auth=("elastic", ELASTIC_PASSWORD)
+            timeout=120
         )
     return client
 
